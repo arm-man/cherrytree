@@ -1,0 +1,102 @@
+# Cherry Tree Product Specification
+
+## Overview
+
+Cherry Tree is a mobile-friendly, web-based family information website of the Cherry family.
+Primary user goal: view birthdays, see how people are related, and conveniently search and sort the information.
+
+## Terminology
+
+- **View**: one of Genealogy or List.
+- **Genealogy** : The View in which the Root Person, Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren are shown, each as their own table.
+- **Root Person** : The Person whose descendants are displayed in Genealogy View.
+- **List** : The View in which all People are shown in a table.
+- **People** : Each entry will have the following data: First Name, Last Name, Age, Birthday, Children, Death Day, Spouse.
+- **Person** : The same as People but when used for a one People entry; the term Person is used simply because it is the singular of People in English.
+- **Full Name** : The concatenation of the First Name with the Last Name.
+- **Generation** : One of Root Person, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
+- **Control** : The View, Sort, or Search controls.
+- **Reset** : Set the View to Genealogy, select Virginia Cherry as the Root Person, clear the Search box, set the displayed Sort to None (Blank), and reset the remembered List View Sort to Birthday.
+
+## Data
+
+- Every Person will have a First Name, Last Name, Birthday, Age (derived from Birthday), Children (integer value representing the number of children). Death Day and Spouse are optional and may be null/blank.
+
+## Wordmark
+
+- The page will have a Cherry Tree wordmark in the upper left.
+- When the wordmark is clicked, perform a Reset.
+
+## Control Section
+
+- This section will show a View toggle, Sort dropdown menu, and a Search text box.
+- The View control toggles between Genealogy and List.
+  - Genealogy is the default.
+  - When Genealogy is selected, the page switches to Genealogy View and the Root Person that was last selected is restored. The Sort option is stored, then changed to None (Blank).
+    - In Genealogy View, the Sort control displays a blank value because sorting does not apply to the overall Genealogy View. Note that Blank is not a selectable Sort option in the List View.
+  - When List is selected, the page switches to List View and restores the most recently selected List View Sort. If no List View Sort has previously been selected, Birthday is used.
+- Sort options include: Birthday, Upcoming Birthday, Death Day, First Name, Last Name, Spouse, Children. Use the order presented here, not alphabetical.
+  - Birthday is the default sort option.
+  - Changing the Sort option switches the page to List View.
+  - When a Sort option is selected, that option is remembered and restored when switching Views using the View Control.
+- The Search text box is a highlighter or filter depending on the View.
+  - The Search text box shall use placeholder text: "Search for a name".
+  - The Search text box will filter based on Full Name or Spouse. A match is true if any one of these columns match, i.e. use OR matching.
+    - Search is case-insensitive and performs a partial-text match. Leading and trailing whitespace in the Search text is ignored.
+  - In Genealogy View, the entire row is highlighted on a match.
+  - In List View, the data is filtered such that only matches are shown.
+  
+## List View
+
+- The People are shown in a single table with columns: Name, Age, Birthday, Children, Death Day, Spouse.
+  - Name is the Full Name.
+- When the Sort option is Upcoming Birthday, ignore the year and sort each Person by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days will be highlighted. Include People with a Death Day in the Upcoming Birthday list.
+- When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
+- When the Sort option is Death Day, the order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
+- When the Sort option is Spouse, sort alphabetically. Ignore the fact that the name may contain a first or last name, simply order the text data alphabetically.
+- When the Sort option is Children, sort descending.
+- When the Sort option is Death Day or Spouse, any entry without data is omitted.
+- When a sort has the same value, e.g. the same Children, the secondary sort is by Full Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
+  - When the Sort option is First Name, sort alphabetically ascending by First Name. Secondary sort is by Last Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
+  - When the Sort option is Last Name, sort alphabetically ascending by Last Name. Secondary sort is by First Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
+- Each Person will be clickable and when clicked, the View changes to Genealogy and the Person clicked becomes the Root Person. The Sort option is stored, then changed to None (Blank).
+- If Search produces no results, display "No people found."
+
+## Genealogy View
+
+- Instead of a single table as used in List View, Genealogy View uses multiple tables, one table for each Generation.
+- The Root Person section contains exactly one Person: the Root Person.
+- Each Genealogy table displays the same Person data columns as List View except Children, which is omitted.
+- The number of children, grandchildren, etc. is listed in the Generation title, e.g. "Children (5)" if the Root Person has 5 children or "Grandchildren (18)" if the Root Person has 18 grandchildren.
+  - The numbers in parenthesis do not change based on the entries highlighted by the Search text box.
+- When Search is empty, no rows are highlighted based on Search.
+- If the Root Person has zero of a certain Generation, that Generation is omitted, with the exception of the Children Generation, in which case that section is shown but with the message "No Children".
+- Each Person will be clickable and when clicked, that Person becomes the Root Person. 
+- The Children table is sorted by Birthday, ascending (oldest first).
+- For Grandchildren, Great Grandchildren, and Great Great Grandchildren:
+  - Include an additional column called Parent, which displays the Person's immediate parent.
+  - These tables are sorted first by the immediate Parent's birthday, ascending (oldest first), then by the Person's Birthday, ascending (oldest first).
+
+## User Experience
+
+- Root Person is always displayed as "Parent" in the UI. The user should never encounter the term Root within the website.
+  - Be aware that in the UI, there will be a Parent that is the Root Person and a Parent of a Grandchild. This is ok for the user experience.
+- Age is calculated from Birthday and today's date and is not independently maintained. Age is displayed simply as an integer number rounded down to whole years. A Person that is 8 years and 300 days old will have an Age of 8.
+  - For a Person with a Death Day, show their age when they died and then in parenthesis display the current age as if they were still alive, e.g. "88 (102)".
+- Dates are displayed as MMM D, YYYY, e.g. May 17, 1947.
+- Children to be shown as a number.
+- If there is no Death Day, that field remains blank.
+- If there is no Spouse, that field remains blank.
+- The Spouse is not a Person in the database and is not clickable. A Spouse is simply an informational field that accompanies a Person. A Person may have one Spouse or no Spouse; cases of remarrying are not considered.
+- Generations contain only descendants of the Root Person; Spouses have no effect on Generations.
+- If the Person has no children, display 0.
+- The color palette shall use the same colors as those found at http://roncherry.net/cherrytree/, i.e. #FDEBCF as the main background color and #F3979D as the secondary/highlight color. Other colors, particularly black and white, are allowed, the guidance here is on the two main colors for the palette.
+
+## Mobile Requirements
+
+- The application must work well on common mobile, tablet, and desktop screen sizes.
+- On narrow screens, table rows shall not be stacked, rather, horizontal scrolling will be enabled. All information available in the desktop table must remain accessible.
+  - Use an appropriate text size as a tradeoff between having to horizontally scroll a lot versus readability of the text.
+- Controls must be touch-friendly.
+- Interactions must not depend on hover.
+- Responsive changes must not reduce the readability or usability of the wider-screen layout.
