@@ -11,7 +11,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - **Genealogy** : The View in which the Root Person, Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren are shown, each as their own table.
 - **Root Person** : The Person whose descendants are displayed in Genealogy View.
 - **List** : The View in which all People are shown in a table.
-- **People** : Each entry will have the following data: First Name, Last Name, Age, Birthday, Children, Death Day, Spouse.
+- **People** : Each entry displays the following data: First Name, Last Name, Age, Birthday, Children, Death Day, Spouse.
 - **Person** : The same as People but when used for a one People entry; the term Person is used simply because it is the singular of People in English.
 - **Full Name** : The concatenation of the First Name with the Last Name.
 - **Generation** : One of Root Person, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
@@ -20,7 +20,11 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 ## Data
 
-- Every Person will have a First Name, Last Name, Birthday, Age (derived from Birthday), Children (integer value representing the number of children). Death Day and Spouse are optional and may be null/blank.
+- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except Virginia Cherry, who is the single top-level Person and has no parent. Death Day and Spouse are optional and may be null/blank.
+- The parent relationships are sufficient to derive the complete genealogy of descendants.
+- Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
+- Age is derived from Birthday and today's date and is not independently maintained.
+- Children is derived as the number of People whose parent is that Person and is not independently maintained.
 
 ## Wordmark
 
@@ -32,13 +36,13 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - This section will show a View toggle, Sort dropdown menu, and a Search text box.
 - The View control toggles between Genealogy and List.
   - Genealogy is the default.
-  - When Genealogy is selected, the page switches to Genealogy View and the Root Person that was last selected is restored. The Sort option is stored, then changed to None (Blank).
+  - When Genealogy is selected, the page switches to Genealogy View and the Root Person that was last selected (remembered in React state during the current page lifetime) is restored. The Sort option is stored, then changed to None (Blank).
     - In Genealogy View, the Sort control displays a blank value because sorting does not apply to the overall Genealogy View. Note that Blank is not a selectable Sort option in the List View.
   - When List is selected, the page switches to List View and restores the most recently selected List View Sort. If no List View Sort has previously been selected, Birthday is used.
 - Sort options include: Birthday, Upcoming Birthday, Death Day, First Name, Last Name, Spouse, Children. Use the order presented here, not alphabetical.
   - Birthday is the default sort option.
   - Changing the Sort option switches the page to List View.
-  - When a Sort option is selected, that option is remembered and restored when switching Views using the View Control.
+  - When a Sort option is selected, that option is remembered (in React state during the current page lifetime) and restored when switching Views using the View Control.
 - The Search text box is a highlighter or filter depending on the View.
   - The Search text box shall use placeholder text: "Search for a name".
   - The Search text box will filter based on Full Name or Spouse. A match is true if any one of these columns match, i.e. use OR matching.
@@ -50,7 +54,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 - The People are shown in a single table with columns: Name, Age, Birthday, Children, Death Day, Spouse.
   - Name is the Full Name.
-- When the Sort option is Upcoming Birthday, ignore the year and sort each Person by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days will be highlighted. Include People with a Death Day in the Upcoming Birthday list.
+- When the Sort option is Upcoming Birthday, ignore the year and sort each Person by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include People with a Death Day in the Upcoming Birthday list.
 - When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
 - When the Sort option is Death Day, the order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
 - When the Sort option is Spouse, sort alphabetically. Ignore the fact that the name may contain a first or last name, simply order the text data alphabetically.
@@ -91,6 +95,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Generations contain only descendants of the Root Person; Spouses have no effect on Generations.
 - If the Person has no children, display 0.
 - The color palette shall use the same colors as those found at http://roncherry.net/cherrytree/, i.e. #FDEBCF as the main background color and #F3979D as the secondary/highlight color. Other colors, particularly black and white, are allowed, the guidance here is on the two main colors for the palette.
+- Edge cases related to February 29 (leap year) can be ignored for now as there is no date data for February 29.
 
 ## Mobile Requirements
 
