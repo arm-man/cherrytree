@@ -1,13 +1,9 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #fdebcf;
+  --foreground: #28201d;
+  --highlight: #f3979d;
+  --muted: #7b6661;
+  --surface: rgba(255, 255, 255, 0.76);
 }
 
 html {
@@ -25,8 +21,10 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 85% 5%, rgba(243, 151, 157, 0.3), transparent 28rem),
+    var(--background);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -42,8 +40,104 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+.page-shell {
+  width: min(100% - 2rem, 70rem);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 4rem) 0;
+}
+
+.wordmark {
+  position: relative;
+  width: fit-content;
+  margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.wordmark span {
+  font-weight: 750;
+}
+
+.wordmark::after {
+  position: absolute;
+  bottom: -0.65rem;
+  left: 0.1rem;
+  width: 2.4rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: var(--highlight);
+  content: "";
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding: 0.25rem;
+}
+
+table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: separate;
+  border-spacing: 0 0.55rem;
+}
+
+th,
+td {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  padding-top: 0;
+  padding-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+td {
+  background: var(--surface);
+  font-size: 1rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(86, 56, 47, 0.07);
+}
+
+td:first-child {
+  border-radius: 0.85rem 0 0 0.85rem;
+}
+
+td:last-child {
+  border-radius: 0 0.85rem 0.85rem 0;
+}
+
+.person-name {
+  font-weight: 650;
+}
+
+.empty-table {
+  border-radius: 0.85rem;
+  text-align: center;
+}
+
+@media (max-width: 40rem) {
+  .page-shell {
+    width: min(100% - 1rem, 70rem);
+    padding: 1.25rem 0;
+  }
+
+  .wordmark {
+    margin-bottom: 2.5rem;
+  }
+
+  th,
+  td {
+    padding-right: 0.9rem;
+    padding-left: 0.9rem;
+    font-size: 0.875rem;
   }
 }

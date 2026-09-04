@@ -1,10 +1,6 @@
 import "server-only";
 
-import { Pool, type QueryResultRow } from "pg";
-
-interface CurrentDatabaseTimeRow extends QueryResultRow {
-  currentTime: Date;
-}
+import { Pool } from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -14,10 +10,10 @@ if (!connectionString) {
 
 export const pool = new Pool({ connectionString });
 
-export async function getCurrentDatabaseTime(): Promise<Date> {
-  const result = await pool.query<CurrentDatabaseTimeRow>(
-    'SELECT CURRENT_TIMESTAMP AS "currentTime"',
-  );
-
-  return result.rows[0].currentTime;
+export async function logServerError(message: string): Promise<void> {
+  try {
+    await pool.query("INSERT INTO logs (message) VALUES ($1)", [message]);
+  } catch (loggingError: unknown) {
+    console.error("Failed to write an error to the database log.", loggingError);
+  }
 }

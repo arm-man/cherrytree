@@ -37,8 +37,8 @@ Stores one row for each person.
 | --- | --- | --- | --- |
 | `id` | `integer` identity | No | Primary key. |
 | `parent_id` | `integer` | Yes | The id of the Person's immediate parent. When NULL it is the single top-level Person that has no immediate parent. |
-| `given_name` | `text` | No | The given name of the Person. |
-| `surname` | `text` | No | The family name of the Person. |
+| `first_name` | `text` | No | The first name of the Person. |
+| `last_name` | `text` | No | The last name of the Person. |
 | `birthday` | `date` | No | The birth date of the Person. |
 | `deathday` | `date` | Yes | The date of death of the Person. |
 | `spouse` | `text` | Yes | The Person's spouse. |
