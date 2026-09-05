@@ -94,7 +94,7 @@ table {
   width: 100%;
   min-width: 48rem;
   border-collapse: separate;
-  border-spacing: 0 0.55rem;
+  border-spacing: 0 0.275rem;
 }
 
 th,
@@ -108,15 +108,19 @@ th {
   padding-top: 0;
   padding-bottom: 0.35rem;
   color: var(--highlight);
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 650;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 td {
+  height: 31px;
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
   background: var(--surface);
-  font-size: 1rem;
+  font-size: 15px;
   box-shadow: 0 0.5rem 1.5rem rgba(86, 56, 47, 0.07);
 }
 
@@ -154,6 +158,6 @@ td:last-child {
   }
 
   td {
-    font-size: 0.875rem;
+    font-size: 13px;
   }
 }
