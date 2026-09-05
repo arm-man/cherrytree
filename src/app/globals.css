@@ -84,6 +84,102 @@ a {
   content: "";
 }
 
+.controls {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 0.7fr) minmax(14rem, 1fr);
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+  padding: 1rem;
+  border: 1px solid rgba(123, 102, 97, 0.18);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: 0 0.5rem 1.5rem rgba(86, 56, 47, 0.07);
+}
+
+.control-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.control-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.view-toggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid rgba(123, 102, 97, 0.28);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.view-toggle button {
+  min-height: 2.65rem;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: 0.55rem;
+  color: var(--foreground);
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.view-toggle button[aria-pressed="true"] {
+  background: var(--highlight);
+}
+
+.view-toggle button:focus-visible,
+.control-input:focus-visible {
+  outline: 0.2rem solid var(--foreground);
+  outline-offset: 0.15rem;
+}
+
+.control-input {
+  width: 100%;
+  min-height: 3.05rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(123, 102, 97, 0.28);
+  border-radius: 0.75rem;
+  color: var(--foreground);
+  background: #fff;
+  font: inherit;
+}
+
+.control-input:disabled {
+  color: var(--muted);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.control-input:disabled::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.genealogy-view {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.5rem);
+}
+
+.generation h2 {
+  margin: 0 0 0.75rem 0.25rem;
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  font-weight: 700;
+}
+
+.empty-generation {
+  padding: 1rem 1.25rem;
+  border-radius: 0.85rem;
+  background: var(--surface);
+  box-shadow: 0 0.5rem 1.5rem rgba(86, 56, 47, 0.07);
+}
+
 .table-scroll {
   width: 100%;
   overflow-x: auto;
@@ -149,6 +245,25 @@ td:last-child {
 
   .wordmark {
     margin-bottom: 2.5rem;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .search-field {
+    grid-column: auto;
+  }
+
+  .view-toggle {
+    width: 100%;
+  }
+
+  .view-toggle button {
+    flex: 1;
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
   }
 
   th,

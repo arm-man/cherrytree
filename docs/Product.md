@@ -16,11 +16,11 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - **Full Name** : The concatenation of the First Name with the Last Name.
 - **Generation** : One of Root Person, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
 - **Control** : The View, Sort, or Search controls.
-- **Reset** : Set the View to Genealogy, select Virginia Cherry as the Root Person, clear the Search box, set the displayed Sort to None (Blank), and reset the remembered List View Sort to Birthday.
+- **Reset** : Set the View to Genealogy, select id=1 as the Root Person, clear the Search box, set the displayed Sort to None (Blank), and reset the remembered List View Sort to Birthday.
 
 ## Data
 
-- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except Virginia Cherry, who is the single top-level Person and has no parent. Death Day and Spouse are optional and may be null/blank.
+- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day and Spouse are optional and may be null/blank.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
 - Age is derived from Birthday and today's date and is not independently maintained.
