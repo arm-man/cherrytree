@@ -3,9 +3,11 @@
 import { useSyncExternalStore } from "react";
 
 import { formatAge, getLocalDateOnly } from "./date-calculations";
+import { getChildCounts } from "./people-calculations";
 
 interface PersonListItem {
   id: number;
+  parentId: number | null;
   firstName: string;
   lastName: string;
   birthday: string;
@@ -76,6 +78,7 @@ export function PersonList({ people }: PersonListProps) {
     getToday,
     getServerToday,
   );
+  const childCounts = getChildCounts(people);
 
   return (
     <div className="table-scroll">
@@ -85,6 +88,7 @@ export function PersonList({ people }: PersonListProps) {
             <th scope="col">Name</th>
             <th scope="col">Age</th>
             <th scope="col">Birthday</th>
+            <th scope="col">Children</th>
             <th scope="col">Death Day</th>
             <th scope="col">Spouse</th>
           </tr>
@@ -92,7 +96,7 @@ export function PersonList({ people }: PersonListProps) {
         <tbody>
           {people.length === 0 ? (
             <tr>
-              <td className="empty-table" colSpan={5}>
+              <td className="empty-table" colSpan={6}>
                 No people found.
               </td>
             </tr>
@@ -108,6 +112,7 @@ export function PersonList({ people }: PersonListProps) {
                     : ""}
                 </td>
                 <td>{formatDate(person.birthday)}</td>
+                <td>{childCounts.get(person.id) ?? 0}</td>
                 <td>{person.deathday ? formatDate(person.deathday) : ""}</td>
                 <td>{person.spouse ?? ""}</td>
               </tr>

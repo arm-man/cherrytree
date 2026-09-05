@@ -94,8 +94,8 @@ td {
 th {
   padding-top: 0;
   padding-bottom: 0.35rem;
-  color: var(--muted);
-  font-size: 0.75rem;
+  color: var(--highlight);
+  font-size: 1rem;
   font-weight: 650;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -138,6 +138,9 @@ td:last-child {
   td {
     padding-right: 0.9rem;
     padding-left: 0.9rem;
+  }
+
+  td {
     font-size: 0.875rem;
   }
 }

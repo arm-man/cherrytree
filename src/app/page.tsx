@@ -2,17 +2,17 @@ import { connection } from "next/server";
 
 import { PersonList } from "@/app/PersonList";
 import { logServerError } from "@/server/db";
-import { getPersonById } from "@/server/people";
+import { getPeople } from "@/server/people";
 
 export default async function Home() {
   await connection();
 
-  let person;
+  let people;
 
   try {
-    person = await getPersonById(1);
+    people = await getPeople();
   } catch (error: unknown) {
-    await logServerError("Failed to load the Version 1 Person.");
+    await logServerError("Failed to load valid People data.");
     throw error;
   }
 
@@ -21,7 +21,7 @@ export default async function Home() {
       <h1 className="wordmark">
         <span>Cherry</span> Tree
       </h1>
-      <PersonList people={person ? [person] : []} />
+      <PersonList people={people} />
     </main>
   );
 }
