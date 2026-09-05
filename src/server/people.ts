@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { QueryResultRow } from "pg";
+import type { PoolClient, QueryResultRow } from "pg";
 
 import { pool } from "@/server/db";
 
@@ -16,12 +16,16 @@ export interface Person {
 
 type PersonRow = QueryResultRow & Person;
 
-function validateParentRelationships(people: Person[]): void {
+export function validateParentRelationships(people: Person[]): void {
   const peopleById = new Map(people.map((person) => [person.id, person]));
   const rootCount = people.filter((person) => person.parentId === null).length;
 
   if (rootCount !== 1) {
     throw new Error("People data must contain exactly one root Person.");
+  }
+
+  if (peopleById.get(1)?.parentId !== null) {
+    throw new Error("Person 1 must be the single root Person.");
   }
 
   // Following every parent chain verifies that each Person reaches the one root
@@ -45,8 +49,8 @@ function validateParentRelationships(people: Person[]): void {
   }
 }
 
-export async function getPeople(): Promise<Person[]> {
-  const result = await pool.query<PersonRow>(
+export async function getPeople(client?: PoolClient): Promise<Person[]> {
+  const result = await (client ?? pool).query<PersonRow>(
     `SELECT
        id,
        parent_id AS "parentId",

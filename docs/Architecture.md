@@ -211,6 +211,14 @@ Use Server Components to load People data for the administrative pages. Use focu
 
 The Admin People List search value should be stored in the URL query string so it can be preserved when returning from an Add Person or Edit Person page.
 
+The administrative pages use the `search` query parameter, for example `/admin/people?search=Cherry`. Typing in the Search box immediately filters the People already loaded in the browser and updates the address bar. Each keystroke does not reload the page, call an API, or query the database; filtering happens locally in the browser.
+
+The URL preserves the Search text across a refresh and when returning from Add Person or Edit Person. Add and Edit links carry the value forward. Refreshing the page or returning from a form still makes a server request to load fresh People data, then the browser applies the preserved Search text.
+
+Updating browser history means replacing the current history entry with `window.history.replaceState`, rather than adding an entry for each keystroke. Pressing Back therefore does not step through every letter typed into the Search box.
+
+Successful creation refreshes server-provided Parent options while keeping the cleared form and confirmation visible.
+
 The Add Person and Edit Person pages may receive the People data needed to construct Parent options during server rendering. The client may filter those options based on the entered Birthday and the Person's descendants, but the server remains authoritative and must validate Parent eligibility and cycle prevention before writing.
 
 The administrative UI supports creating and editing People only. It does not support deletion.
@@ -232,6 +240,8 @@ Client code must parse and manipulate them as year, month, and day values. Do no
 Because Next.js Client Components may participate in the initial server render, the authoritative value of today's date must not be established during server rendering. After the interactive Client Component mounts in the browser, determine today's calendar date from the browser's local time zone and use that value for all date-dependent client calculations, including Age and Upcoming Birthday.
 
 Treat today as a calendar date (year, month, and day), not as a UTC timestamp or server time. The server does not need to know or receive today's date.
+
+Admin date validation on the client side and server are handled separately. This means that near midnight, the client side validation may pass because it uses the browser's date/time, but the server may fail the validation. This edge case is ok.
 
 This makes them easier to understand and test without creating a formal business-logic framework.
 

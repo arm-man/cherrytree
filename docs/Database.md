@@ -89,6 +89,8 @@ The transaction must:
 
 No distributed locking or idempotency-key mechanism is required for the expected usage.
 
+Administrative transactions acquire a PostgreSQL `SHARE ROW EXCLUSIVE` lock on `people` before reading. This serializes writers so validation and the resulting write use a consistent parent graph, while ordinary page reads remain available. The transaction uses UTC for authoritative current-date validation and releases its client after commit or rollback.
+
 ## Indexes
 
 No additional indexes are required initially. The initial page load reads all People records, and sorting, searching, child counts, genealogy grouping, and cycle detection are performed after the read rather than by database queries. Add an index only if a later access pattern or measured performance problem justifies it.
