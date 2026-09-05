@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useSyncExternalStore } from "react";
+import { DeceasedAge } from "./DeceasedAge";
 
 import birthcake from "../../public/birthcake.jpg";
 import {
@@ -121,7 +122,7 @@ function PersonTable({
   const childCounts = showChildren
     ? getChildCounts([...peopleById.values()])
     : null;
-  const columnCount = 5 + Number(showChildren) + Number(showParent);
+  const columnCount = 4 + Number(showChildren) + Number(showParent);
 
   return (
     <div className="table-scroll">
@@ -133,7 +134,6 @@ function PersonTable({
             <th scope="col">Age</th>
             <th scope="col">Birthed</th>
             {showChildren ? <th scope="col">Children</th> : null}
-            <th scope="col">Death Day</th>
             <th scope="col">Spouse</th>
           </tr>
         </thead>
@@ -171,9 +171,20 @@ function PersonTable({
                     <td>{parent ? getFullName(parent) : ""}</td>
                   ) : null}
                   <td>
-                    {today
-                      ? formatAge(person.birthday, person.deathday, today)
-                      : ""}
+                    {today ? (
+                      person.deathday ? (
+                        <DeceasedAge
+                          birthday={person.birthday}
+                          deathday={person.deathday}
+                          deathDateLabel={formatDate(person.deathday)}
+                          today={today}
+                        />
+                      ) : (
+                        formatAge(person.birthday, null, today)
+                      )
+                    ) : (
+                      ""
+                    )}
                   </td>
                   <td
                     className={
@@ -187,7 +198,6 @@ function PersonTable({
                   {showChildren ? (
                     <td>{childCounts?.get(person.id) ?? 0}</td>
                   ) : null}
-                  <td>{person.deathday ? formatDate(person.deathday) : ""}</td>
                   <td>{person.spouse ?? ""}</td>
                 </tr>
               );

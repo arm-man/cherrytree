@@ -23,7 +23,11 @@ body {
   flex-direction: column;
   color: var(--foreground);
   background:
-    radial-gradient(circle at 85% 5%, rgba(243, 151, 157, 0.3), transparent 28rem),
+    radial-gradient(
+      circle at 85% 5%,
+      rgba(243, 151, 157, 0.3),
+      transparent 28rem
+    ),
     var(--background);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -302,6 +306,50 @@ td.highlighted-birthday {
   }
 }
 
+.deceased-age {
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0.2rem;
+  border: 0;
+  border-radius: 0.4rem;
+  color: var(--accent-strong);
+  background: transparent;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.deceased-age:focus-visible {
+  outline: 0.2rem solid var(--foreground);
+  outline-offset: 0.15rem;
+}
+
+.deceased-age:hover,
+.deceased-age[aria-expanded="true"] {
+  background: rgba(243, 151, 157, 0.25);
+}
+
+.death-details {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100dvh - 1rem);
+  overflow: auto;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--highlight);
+  border-radius: 0.6rem;
+  color: var(--foreground);
+  background: #fff;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: 0 0.5rem 1.5rem rgba(86, 56, 47, 0.15);
+}
+
 .empty-table {
   border-radius: 0.85rem;
   text-align: center;
@@ -314,26 +362,34 @@ td.highlighted-birthday {
   }
 
   .wordmark {
-    margin-bottom: 1.5rem;
+    margin-bottom: calc(1.5rem + 6px);
   }
 
   .controls {
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: start;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .control-field {
+    min-width: 0;
   }
 
   .search-field {
-    grid-column: auto;
+    grid-column: 1 / -1;
   }
 
-  .view-toggle {
-    width: 100%;
+  .view-toggle,
+  .control-input {
+    height: 36px;
+    min-height: 0;
   }
 
   .view-toggle button {
-    flex: 1;
-    padding-right: 0.6rem;
-    padding-left: 0.6rem;
+    min-height: 0;
+    padding-right: 0.85rem;
+    padding-left: 0.85rem;
   }
 
   th,

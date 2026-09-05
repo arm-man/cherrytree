@@ -5,19 +5,7 @@ interface CalendarDate {
 }
 
 const DAYS_BEFORE_MONTH = [
-  0,
-  0,
-  31,
-  59,
-  90,
-  120,
-  151,
-  181,
-  212,
-  243,
-  273,
-  304,
-  334,
+  0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
 ];
 
 function parseDateOnly(date: string): CalendarDate {
@@ -69,7 +57,7 @@ export function formatAge(
     return String(currentAge);
   }
 
-  return `${calculateAge(birthday, deathday)} (${currentAge})`;
+  return `${calculateAge(birthday, deathday)} †`;
 }
 
 export function getDaysUntilNextBirthday(

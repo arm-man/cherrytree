@@ -18,11 +18,17 @@ test("formats a living person's current age", () => {
   assert.equal(formatAge("2000-09-05", null, "2026-09-04"), "25");
 });
 
-test("formats age at death followed by the age if alive today", () => {
-  assert.equal(
-    formatAge("1924-05-17", "2012-04-30", "2026-09-04"),
-    "87 (102)",
-  );
+test("formats age at death with a dagger", () => {
+  assert.equal(formatAge("1924-05-17", "2012-04-30", "2026-09-04"), "87 †");
+});
+
+test("age at death uses the full date and stays fixed as today changes", () => {
+  assert.equal(formatAge("1924-05-17", "2012-05-16", "2026-05-16"), "87 †");
+  assert.equal(formatAge("1924-05-17", "2012-05-17", "2026-05-17"), "88 †");
+  assert.equal(formatAge("1924-05-17", "2012-05-18", "2027-05-17"), "88 †");
+  assert.equal(calculateAge("1924-05-17", "2026-05-16"), 101);
+  assert.equal(calculateAge("1924-05-17", "2026-05-17"), 102);
+  assert.equal(formatAge("2000-12-31", "2020-01-01", "2026-01-01"), "19 †");
 });
 
 test("calculates the next birthday including today and across years", () => {

@@ -11,7 +11,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - **Genealogy** : The View in which the Root Person, Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren are shown, each as their own table.
 - **Root Person** : The Person whose descendants are displayed in Genealogy View.
 - **List** : The View in which all People are shown in a table.
-- **People** : Each entry displays the following data: First Name, Last Name, Age, Birthday, Children, Death Day, Spouse.
+- **People** : Each entry displays the following data: First Name, Last Name, Age, Birthday, Children, Spouse.
 - **Person** : The same as People but when used for a one People entry; the term Person is used simply because it is the singular of People in English.
 - **Full Name** : The concatenation of the First Name with the Last Name.
 - **Generation** : One of Root Person, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
@@ -23,7 +23,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day and Spouse are optional and may be null/blank.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
-- Age is derived from Birthday and today's date and is not independently maintained.
+- Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
 - Children is derived as the number of People whose parent is that Person and is not independently maintained.
 
 ## Wordmark
@@ -34,6 +34,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 ## Control Section
 
 - This section will show a View toggle, Sort dropdown menu, and a Search text box.
+- On mobile, View and Sort share the first row, with View sized to its buttons and Sort filling the remaining width. Search spans the full second row. Use compact panel padding and spacing while keeping controls touch-friendly.
 - The View control toggles between Genealogy and List.
   - Genealogy is the default.
   - When Genealogy is selected, the page switches to Genealogy View and the Root Person that was last selected (remembered in React state during the current page lifetime) is restored. The Sort option is stored, then changed to None (Blank).
@@ -52,7 +53,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   
 ## List View
 
-- The People are shown in a single table with columns: Name, Age, Birthed, Children, Death Day, Spouse.
+- The People are shown in a single table with columns: Name, Age, Birthed, Children, Spouse.
   - Name is the Full Name.
   - Birthed displays the Person's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
 - When the Sort option is Upcoming Birthday, ignore the year and sort each Person by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include People with a Death Day in the Upcoming Birthday list.
@@ -87,11 +88,14 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 - Root Person is always displayed as "Parent" in the UI. The user should never encounter the term Root within the website.
   - Be aware that in the UI, there will be a Parent that is the Root Person and a Parent of a Grandchild. This is ok for the user experience.
-- Age is calculated from Birthday and today's date and is not independently maintained. Age is displayed simply as an integer number rounded down to whole years. A Person that is 8 years and 300 days old will have an Age of 8.
-  - For a Person with a Death Day, show their age when they died and then in parenthesis display the current age as if they were still alive, e.g. "88 (102)".
-- Dates are displayed as MMM D, YYYY, e.g. May 17, 1947.
+- Age displays completed whole years, comparing the full Birthday with today's local calendar date for living People or Death Day for deceased People.
+  - Living People's ages are plain, noninteractive text.
+  - Deceased People's ages show age at death followed by a dagger, e.g. "82 †", on a subtly underlined button. Its accessible label communicates the age, deceased status, and availability of death details; the dagger is not the only indication of death.
+  - Hover, keyboard focus, click, tap, Enter, or Space reveal a small popup with "Died March 14, 2008" and "Would be 100 today", using that Person's Death Day and hypothetical completed age as of today. Activation keeps the popup open; activating again, pressing Escape, clicking/tapping outside, or moving focus away dismisses it. Hover previews remain available while the pointer is over the age or popup.
+  - Retain visible keyboard focus. Keep the popup within the viewport and outside table clipping, without adding horizontal scrolling; dismiss it when the viewport is resized or scrolled.
+- Neither View has a Death Day column. Keep Death Day in stored and internal Person data for age calculations, death details, and the existing Death Day sort.
+- Dates use full English month names, e.g. March 14, 2008 or May 17, 1947, matching the existing Birthed display. Birthday and Death Day remain calendar dates without time-zone conversion.
 - Children to be shown as a number.
-- If there is no Death Day, that field remains blank.
 - If there is no Spouse, that field remains blank.
 - The Spouse is not a Person in the database and is not clickable. A Spouse is simply an informational field that accompanies a Person. A Person may have one Spouse or no Spouse; cases of remarrying are not considered.
 - Generations contain only descendants of the Root Person; Spouses have no effect on Generations.

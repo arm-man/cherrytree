@@ -69,7 +69,7 @@ The application must not store credentials, connection strings, or other secrets
 
 ### Age
 
-A Person's age is derived from today's date and the birthday.
+Age is derived, not stored. It uses birthday and deathday for deceased People, or birthday and today's date for living People. See `Product.md` for Age display and death details.
 
 ### Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren
 
