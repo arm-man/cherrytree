@@ -270,7 +270,7 @@ export function PersonList({ people }: PersonListProps) {
             className="wordmark-icon"
             src={birthcake}
             alt=""
-            preload
+            loading="eager"
             unoptimized
           />
           <span className="wordmark-label">

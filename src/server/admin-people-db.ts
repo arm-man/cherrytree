@@ -59,6 +59,17 @@ export async function insertPerson(
   return result.rows[0].id;
 }
 
+export async function insertPersonLog(
+  client: PoolClient,
+  message: string,
+): Promise<void> {
+  // Use the save transaction so the Person and all its logs commit together.
+  await client.query(
+    "INSERT INTO logs (severity, message) VALUES ('info', $1)",
+    [message],
+  );
+}
+
 export async function updatePerson(
   client: PoolClient,
   personId: number,

@@ -14,7 +14,12 @@ export default function AdminPeopleLayout({
   return (
     <main className={`page-shell ${styles.admin}`}>
       <Link href="/" className="wordmark" aria-label="Cherry Tree home">
-        <Image src={birthcake} alt="" className="wordmark-icon" />
+        <Image
+          src={birthcake}
+          alt=""
+          className="wordmark-icon"
+          loading="eager"
+        />
         <span className="wordmark-label">
           Cherry <span>Tree</span>
         </span>
