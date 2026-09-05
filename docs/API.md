@@ -20,7 +20,9 @@ Cherry Tree is a single Next.js application. The endpoints in this document are 
 
 ## Scope
 
-The initial release does not contain any API endpoints.
+The administration feature uses API endpoints to create and edit People. Administrative pages load their read data through Server Components and therefore do not require read endpoints.
+
+The initial administration endpoints do not require authentication. Authentication and authorization may be added later.
 
 ## Conventions
 
@@ -52,7 +54,8 @@ When a timestamp is needed in a response, return it as an ISO 8601 UTC string, f
 
 ### Success Status Codes
 
-- `200 OK` for successful actions and previews.
+- `200 OK` for a successful update.
+- `201 Created` for a successfully created Person.
 
 ### Error Shape
 
@@ -61,8 +64,8 @@ All expected API errors use this minimal shape:
 ```json
 {
   "error": {
-    "code": "USERNAME_NOT_FOUND",
-    "message": "That Username does not exist."
+    "code": "INVALID_BIRTHDAY",
+    "message": "Enter a valid Birthday."
   }
 }
 ```
@@ -91,10 +94,88 @@ The server should write the underlying unexpected error to the `logs` table with
 | `404 Not Found` | The requested resource does not exist. |
 | `500 Internal Server Error` | Unexpected server failure. |
 
+## People Administration
+
+### Create a Person
+
+```http
+POST /api/admin/people
+```
+
+Request body:
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Cherry",
+  "birthday": "2026-09-05",
+  "deathday": null,
+  "spouse": null,
+  "parentId": 42
+}
+```
+
+- `firstName`, `lastName`, `birthday`, and `parentId` are required.
+- `deathday` and `spouse` are nullable.
+- The database generates the new Person's id; the id is not included in the request URL or request body.
+
+Successful response:
+
+```http
+201 Created
+```
+
+```json
+{
+  "personId": 123
+}
+```
+
+Expected errors include:
+
+- `REQUIRED_FIELD_MISSING`
+- `INVALID_BIRTHDAY`
+- `INVALID_DEATHDAY`
+- `INVALID_PARENT`
+- `PARENT_TOO_YOUNG`
+- `RELATIONSHIP_CYCLE`
+
+### Edit a Person
+
+```http
+PUT /api/admin/people/{personId}
+```
+
+The request body uses the same shape as Create a Person. For `personId=1`, `parentId` must be null. For every other Person, `parentId` is required and must be a valid integer.
+
+Successful response:
+
+```http
+200 OK
+```
+
+```json
+{
+  "personId": 123
+}
+```
+
+Expected errors include the Create a Person errors and:
+
+- `NO_CHANGES` when no editable values differ from the stored Person.
+- `PERSON_NOT_FOUND` when `personId` does not identify an existing Person.
+
+All validation errors use `400 Bad Request`. A missing Person uses `404 Not Found`.
+
+For both endpoints, blank optional Death Day and Spouse values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
+
 ## Server-Rendered Page Data
 
 The following data is expected to be loaded by Server Components through server-side functions rather than by calling the application's own API:
 - The main Cherry Tree page.
+- The Admin People List.
+- The Add Person page.
+- The Edit Person page.
 
 These server-side data shapes should be kept close to the pages that use them. They do not need public HTTP contracts in this document unless browser-side requirements later make an endpoint useful.
 

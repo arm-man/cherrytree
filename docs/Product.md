@@ -103,6 +103,39 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - The color palette shall use the same colors as those found at http://roncherry.net/cherrytree/, i.e. #FDEBCF as the main background color and #F3979D as the secondary/highlight color. Other colors, particularly black and white, are allowed, the guidance here is on the two main colors for the palette.
 - Edge cases related to February 29 (leap year) can be ignored for now as there is no date data for February 29.
 
+## Administration
+
+- The initial administration feature is part of the same Cherry Tree application and is available without authentication. Administrator authentication may be added later.
+- The Admin People List is available at `/admin/people`.
+  - Load all People and sort them alphabetically by Full Name.
+  - Each Person is a clickable entry displaying Full Name, Birthday, Death Day, the Parent's Full Name, and Spouse.
+  - Optional Death Day and Spouse values remain blank when they are null. The single top-level Person's Parent remains blank.
+  - A Search text box filters the list immediately using a case-insensitive partial-text match against Full Name or Spouse. Leading and trailing whitespace in the Search text is ignored.
+  - If Search produces no results, display "No people found."
+  - Preserve the Search text when returning from an Add Person or Edit Person page.
+  - An Add Person button navigates to `/admin/people/new`.
+  - Clicking a Person navigates to `/admin/people/[id]/edit` for that Person.
+- The Add Person and Edit Person forms contain First Name, Last Name, Birthday, Death Day, Spouse, and Parent.
+  - First Name, Last Name, Birthday, and Parent are required, except that id=1 is the single top-level Person and has no Parent.
+  - Death Day and Spouse are optional. Blank optional values are stored as null.
+  - Birthday must not be in the future. Death Day, when provided, must not be before Birthday or in the future.
+  - The Parent control is a searchable dropdown sorted alphabetically by Full Name. Each option displays the Person's Full Name and Birthday.
+  - Birthday appears before Parent in the form. On the Add Person page, Parent remains disabled until a valid Birthday is entered.
+  - A Person is eligible to be selected as Parent only if the proposed Parent was at least 15 years old when the Person was born.
+  - On the Edit Person page, the Person being edited and all of that Person's descendants are excluded from the Parent options.
+  - When editing id=1, Parent displays no value and is disabled. No other Person may have a null Parent.
+  - Client-side validation provides immediate feedback, but the server validates all fields and relationship rules before saving.
+  - While a save request is pending, disable the form's action buttons to prevent duplicate submissions.
+  - If validation fails, remain on the form, preserve the entered values, and show field-specific or form-level errors.
+- The Edit Person page contains Save and Cancel buttons.
+  - Cancel returns to the Admin People List without saving.
+  - If Save succeeds, return to the Admin People List.
+  - If Save is selected when no editable values have changed, remain on the Edit Person page and display "No changes were made."
+- The Add Person page contains Save and Cancel/Return buttons.
+  - If Save succeeds, remain on the Add Person page, clear the form, and display a confirmation that identifies the Person added and indicates that another Person may be entered.
+  - Cancel/Return returns to the Admin People List without saving the current form.
+- The initial administration feature does not provide a way to delete a Person.
+
 ## Mobile Requirements
 
 - The application must work well on common mobile, tablet, and desktop screen sizes.

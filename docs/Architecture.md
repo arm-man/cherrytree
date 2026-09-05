@@ -197,19 +197,23 @@ Use ordinary React state when local browser state is sufficient.
 
 ## Administration
 
-Do not build a separate administrative application or administrative UI for the initial release.
+The application includes a small administrative UI within the same Next.js application and deployment. Do not create a separate administrative application or service.
 
-Initially, the Administrator may create, edit, or delete People directly through Neon using SQL.
+The initial administration feature intentionally has no authentication or authorization. Authentication may be added later. Until then, the administrative pages and mutation endpoints are not protected.
 
-This avoids building:
+Use these pages:
 
-- Administrator authentication.
-- Administrator pages.
-- Administrator forms.
-- Administrator authorization logic.
-- Additional CRUD application code.
+- `/admin/people` for the searchable Admin People List.
+- `/admin/people/new` for adding a Person.
+- `/admin/people/[id]/edit` for editing a Person.
 
-If direct database administration becomes inconvenient, a simple administrative UI can be added later.
+Use Server Components to load People data for the administrative pages. Use focused Client Components for immediate list filtering, form state, client-side validation, pending-button behavior, and ordinary HTTP calls to mutation Route Handlers.
+
+The Admin People List search value should be stored in the URL query string so it can be preserved when returning from an Add Person or Edit Person page.
+
+The Add Person and Edit Person pages may receive the People data needed to construct Parent options during server rendering. The client may filter those options based on the entered Birthday and the Person's descendants, but the server remains authoritative and must validate Parent eligibility and cycle prevention before writing.
+
+The administrative UI supports creating and editing People only. It does not support deletion.
 
 ## Business Logic
 
@@ -234,6 +238,8 @@ This makes them easier to understand and test without creating a formal business
 ## Transactions
 
 Use PostgreSQL transactions only where multiple database changes must succeed or fail together to preserve valid data.
+
+Person creation and editing require reading existing relationship data, validating product rules, and then writing. Perform the authoritative validation and write through the same checked-out database client within a short transaction, as defined in `Database.md`.
 
 Do not wrap ordinary single-statement operations in unnecessary transactions.
 
@@ -335,7 +341,7 @@ Do not introduce any of the following:
 - WebSockets.
 - Serverless infrastructure beyond what the hosting platform provides automatically.
 - Dedicated authentication framework.
-- Administrative application or UI.
+- Separate administrative application or deployment.
 - Dedicated migration framework.
 - Repository pattern.
 - Dependency injection framework.

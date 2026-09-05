@@ -77,7 +77,17 @@ A Person's progeny can be derived from the parent_id.
 
 ## Transactions
 
-N/A
+Creating or editing a Person requires authoritative validation against existing People data followed by a write. Perform the validation and write through the same checked-out PostgreSQL client within a short transaction.
+
+The transaction must:
+
+1. Read the existing People data needed to validate the submitted Person and parent relationship.
+2. For an edit, verify that the Person exists and that at least one editable value changed.
+3. Validate the date, Parent, single-root, and cycle-prevention rules described below.
+4. Insert or update the Person using parameterized SQL.
+5. Commit only if all validation and the write succeed; otherwise roll back.
+
+No distributed locking or idempotency-key mechanism is required for the expected usage.
 
 ## Indexes
 
@@ -88,6 +98,22 @@ No additional indexes are required initially. The initial page load reads all Pe
 A Person cannot be deleted while another Person references that Person through parent_id.
 
 Do not use cascading deletes for the people parent relationship. If a referenced parent must be deleted, the affected child relationships must first be deliberately updated or removed.
+
+The initial administrative UI does not support deletion.
+
+For administrative creation and editing:
+
+- Trim First Name and Last Name and reject either value when it is null or blank.
+- Birthday is required and must not be in the future.
+- Death Day is nullable. When provided, it must not be before Birthday or in the future.
+- Spouse is nullable. Normalize a blank Spouse to null.
+- A blank Death Day is stored as null.
+- id=1 must have parent_id of null. Every other Person must have a non-null parent_id that references an existing Person.
+- The proposed Parent must have been at least 15 years old on the Person's Birthday.
+- A Person cannot be their own Parent.
+- A Person's descendant cannot become that Person's Parent.
+- Every successful write must preserve exactly one root and an acyclic parent graph.
+- An edit that does not change any editable value must be rejected without issuing an update.
 
 ## Manual Database Smoke Tests
 
