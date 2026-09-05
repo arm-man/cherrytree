@@ -48,6 +48,9 @@ a {
 
 .wordmark {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   width: fit-content;
   margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
   font-size: clamp(2rem, 5vw, 3rem);
@@ -56,14 +59,24 @@ a {
   letter-spacing: -0.06em;
 }
 
-.wordmark span {
+.wordmark-icon {
+  width: clamp(3rem, 7vw, 4rem);
+  height: auto;
+  flex: none;
+}
+
+.wordmark-label {
+  white-space: nowrap;
+}
+
+.wordmark-label > span {
   font-weight: 750;
 }
 
 .wordmark::after {
   position: absolute;
   bottom: -0.65rem;
-  left: 0.1rem;
+  left: calc(clamp(3rem, 7vw, 4rem) + 0.85rem);
   width: 2.4rem;
   height: 0.3rem;
   border-radius: 999px;
