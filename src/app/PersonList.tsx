@@ -1,12 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useSyncExternalStore } from "react";
 
-import { formatAge, getLocalDateOnly } from "./date-calculations";
+import birthcake from "../../public/birthcake.jpg";
 import {
+  formatAge,
+  getLocalDateOnly,
+  isUpcomingBirthday,
+} from "./date-calculations";
+import {
+  filterPeopleBySearch,
   getChildCounts,
   getGenealogyGenerations,
+  personMatchesSearch,
+  SORT_OPTIONS,
+  sortPeople,
 } from "./people-calculations";
+import type { SortOption } from "./people-calculations";
 
 interface PersonListItem {
   id: number;
@@ -29,20 +40,14 @@ interface PersonTableProps {
   showChildren?: boolean;
   showParent?: boolean;
   today: string | null;
+  isBirthdayHighlighted?: (person: PersonListItem) => boolean;
+  isRowHighlighted?: (person: PersonListItem) => boolean;
+  onPersonNameClick: (person: PersonListItem) => void;
 }
 
 type View = "genealogy" | "list";
 
 const ROOT_PERSON_ID = 1;
-const SORT_OPTIONS = [
-  "Birthday",
-  "Upcoming Birthday",
-  "Death Day",
-  "First Name",
-  "Last Name",
-  "Spouse",
-  "Children",
-];
 const MONTH_NAMES = [
   "January",
   "February",
@@ -98,6 +103,10 @@ function getServerToday(): null {
   return null;
 }
 
+function isSortOption(value: string): value is SortOption {
+  return SORT_OPTIONS.some((sortOption) => sortOption === value);
+}
+
 function PersonTable({
   ariaLabel,
   people,
@@ -105,6 +114,9 @@ function PersonTable({
   showChildren = false,
   showParent = false,
   today,
+  isBirthdayHighlighted,
+  isRowHighlighted,
+  onPersonNameClick,
 }: PersonTableProps) {
   const childCounts = showChildren
     ? getChildCounts([...peopleById.values()])
@@ -140,8 +152,21 @@ function PersonTable({
                   : peopleById.get(person.parentId);
 
               return (
-                <tr key={person.id}>
-                  <td className="person-name">{getFullName(person)}</td>
+                <tr
+                  className={
+                    isRowHighlighted?.(person) ? "highlighted-row" : undefined
+                  }
+                  key={person.id}
+                >
+                  <td className="person-name">
+                    <button
+                      type="button"
+                      className="person-name-button"
+                      onClick={() => onPersonNameClick(person)}
+                    >
+                      {getFullName(person)}
+                    </button>
+                  </td>
                   {showParent ? (
                     <td>{parent ? getFullName(parent) : ""}</td>
                   ) : null}
@@ -150,7 +175,15 @@ function PersonTable({
                       ? formatAge(person.birthday, person.deathday, today)
                       : ""}
                   </td>
-                  <td>{formatDate(person.birthday)}</td>
+                  <td
+                    className={
+                      isBirthdayHighlighted?.(person)
+                        ? "highlighted-birthday"
+                        : undefined
+                    }
+                  >
+                    {formatDate(person.birthday)}
+                  </td>
                   {showChildren ? (
                     <td>{childCounts?.get(person.id) ?? 0}</td>
                   ) : null}
@@ -168,6 +201,9 @@ function PersonTable({
 
 export function PersonList({ people }: PersonListProps) {
   const [view, setView] = useState<View>("genealogy");
+  const [rootPersonId, setRootPersonId] = useState(ROOT_PERSON_ID);
+  const [listSort, setListSort] = useState<SortOption>("Birthday");
+  const [searchText, setSearchText] = useState("");
   // Avoid using the server's date during prerendering because today is defined by
   // the browser's local calendar. The subscription also refreshes at local midnight.
   const today = useSyncExternalStore(
@@ -176,11 +212,63 @@ export function PersonList({ people }: PersonListProps) {
     getServerToday,
   );
   const peopleById = new Map(people.map((person) => [person.id, person]));
-  const rootPerson = peopleById.get(ROOT_PERSON_ID);
-  const generations = getGenealogyGenerations(people, ROOT_PERSON_ID);
+  const childCounts = getChildCounts(people);
+  const rootPerson = peopleById.get(rootPersonId);
+  const generations = getGenealogyGenerations(people, rootPersonId);
+  const filteredPeople = filterPeopleBySearch(people, searchText);
+  const listPeople = today
+    ? sortPeople(filteredPeople, listSort, today, childCounts)
+    : filteredPeople;
+
+  function reset(): void {
+    setView("genealogy");
+    setRootPersonId(ROOT_PERSON_ID);
+    setListSort("Birthday");
+    setSearchText("");
+  }
+
+  function showPersonAsParent(person: PersonListItem): void {
+    setRootPersonId(person.id);
+    setView("genealogy");
+  }
+
+  function handleParentNameClick(person: PersonListItem): void {
+    if (person.parentId !== null) {
+      setRootPersonId(person.parentId);
+    }
+  }
+
+  function handleSortChange(value: string): void {
+    if (!isSortOption(value)) {
+      return;
+    }
+
+    setListSort(value);
+    setView("list");
+  }
 
   return (
     <>
+      <h1 className="wordmark-heading">
+        <button
+          type="button"
+          className="wordmark"
+          aria-label="Reset Cherry Tree"
+          onClick={reset}
+        >
+          <Image
+            className="wordmark-icon"
+            src={birthcake}
+            alt=""
+            preload
+            unoptimized
+          />
+          <span className="wordmark-label">
+            <span>Cherry</span> Tree
+          </span>
+        </button>
+      </h1>
+
       <section className="controls" aria-label="Controls">
         <div className="control-field">
           <span className="control-label">View</span>
@@ -209,10 +297,10 @@ export function PersonList({ people }: PersonListProps) {
           <select
             id="sort"
             className="control-input"
-            value={view === "genealogy" ? "" : "Birthday"}
-            disabled
+            value={view === "genealogy" ? "" : listSort}
+            onChange={(event) => handleSortChange(event.target.value)}
           >
-            <option value="" aria-label="None" />
+            <option value="" aria-label="None" disabled />
             {SORT_OPTIONS.map((sortOption) => (
               <option key={sortOption} value={sortOption}>
                 {sortOption}
@@ -230,7 +318,8 @@ export function PersonList({ people }: PersonListProps) {
             className="control-input"
             type="search"
             placeholder="Search for a name"
-            disabled
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
           />
         </div>
       </section>
@@ -238,10 +327,16 @@ export function PersonList({ people }: PersonListProps) {
       {view === "list" ? (
         <PersonTable
           ariaLabel="People"
-          people={people}
+          people={listPeople}
           peopleById={peopleById}
           showChildren
           today={today}
+          isBirthdayHighlighted={
+            listSort === "Upcoming Birthday" && today
+              ? (person) => isUpcomingBirthday(person.birthday, today)
+              : undefined
+          }
+          onPersonNameClick={showPersonAsParent}
         />
       ) : (
         <div className="genealogy-view">
@@ -252,6 +347,10 @@ export function PersonList({ people }: PersonListProps) {
               people={rootPerson ? [rootPerson] : []}
               peopleById={peopleById}
               today={today}
+              isRowHighlighted={(person) =>
+                personMatchesSearch(person, searchText)
+              }
+              onPersonNameClick={handleParentNameClick}
             />
           </section>
 
@@ -265,6 +364,10 @@ export function PersonList({ people }: PersonListProps) {
                 people={generations.children}
                 peopleById={peopleById}
                 today={today}
+                isRowHighlighted={(person) =>
+                  personMatchesSearch(person, searchText)
+                }
+                onPersonNameClick={showPersonAsParent}
               />
             )}
           </section>
@@ -278,6 +381,10 @@ export function PersonList({ people }: PersonListProps) {
                 peopleById={peopleById}
                 showParent
                 today={today}
+                isRowHighlighted={(person) =>
+                  personMatchesSearch(person, searchText)
+                }
+                onPersonNameClick={showPersonAsParent}
               />
             </section>
           ) : null}
@@ -293,6 +400,10 @@ export function PersonList({ people }: PersonListProps) {
                 peopleById={peopleById}
                 showParent
                 today={today}
+                isRowHighlighted={(person) =>
+                  personMatchesSearch(person, searchText)
+                }
+                onPersonNameClick={showPersonAsParent}
               />
             </section>
           ) : null}
@@ -309,6 +420,10 @@ export function PersonList({ people }: PersonListProps) {
                 peopleById={peopleById}
                 showParent
                 today={today}
+                isRowHighlighted={(person) =>
+                  personMatchesSearch(person, searchText)
+                }
+                onPersonNameClick={showPersonAsParent}
               />
             </section>
           ) : null}

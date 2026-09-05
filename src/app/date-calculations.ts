@@ -4,10 +4,40 @@ interface CalendarDate {
   day: number;
 }
 
+const DAYS_BEFORE_MONTH = [
+  0,
+  0,
+  31,
+  59,
+  90,
+  120,
+  151,
+  181,
+  212,
+  243,
+  273,
+  304,
+  334,
+];
+
 function parseDateOnly(date: string): CalendarDate {
   const [year, month, day] = date.split("-").map(Number);
 
   return { year, month, day };
+}
+
+function isLeapYear(year: number): boolean {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+}
+
+function getDayOfYear(date: CalendarDate): number {
+  const leapDay = date.month > 2 && isLeapYear(date.year) ? 1 : 0;
+
+  return DAYS_BEFORE_MONTH[date.month] + leapDay + date.day;
+}
+
+function getDaysInYear(year: number): number {
+  return isLeapYear(year) ? 366 : 365;
 }
 
 export function getLocalDateOnly(date: Date): string {
@@ -40,4 +70,33 @@ export function formatAge(
   }
 
   return `${calculateAge(birthday, deathday)} (${currentAge})`;
+}
+
+export function getDaysUntilNextBirthday(
+  birthday: string,
+  today: string,
+): number {
+  const birthDate = parseDateOnly(birthday);
+  const todayDate = parseDateOnly(today);
+  const birthdayHasNotPassed =
+    birthDate.month > todayDate.month ||
+    (birthDate.month === todayDate.month && birthDate.day >= todayDate.day);
+  const nextBirthdayYear = birthdayHasNotPassed
+    ? todayDate.year
+    : todayDate.year + 1;
+  const nextBirthday = { ...birthDate, year: nextBirthdayYear };
+
+  if (nextBirthdayYear === todayDate.year) {
+    return getDayOfYear(nextBirthday) - getDayOfYear(todayDate);
+  }
+
+  return (
+    getDaysInYear(todayDate.year) -
+    getDayOfYear(todayDate) +
+    getDayOfYear(nextBirthday)
+  );
+}
+
+export function isUpcomingBirthday(birthday: string, today: string): boolean {
+  return getDaysUntilNextBirthday(birthday, today) < 7;
 }

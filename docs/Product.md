@@ -52,8 +52,9 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   
 ## List View
 
-- The People are shown in a single table with columns: Name, Age, Birthday, Children, Death Day, Spouse.
+- The People are shown in a single table with columns: Name, Age, Birthed, Children, Death Day, Spouse.
   - Name is the Full Name.
+  - Birthed displays the Person's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
 - When the Sort option is Upcoming Birthday, ignore the year and sort each Person by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include People with a Death Day in the Upcoming Birthday list.
 - When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
 - When the Sort option is Death Day, the order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
@@ -63,7 +64,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - When a sort has the same value, e.g. the same Children, the secondary sort is by Full Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
   - When the Sort option is First Name, sort alphabetically ascending by First Name. Secondary sort is by Last Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
   - When the Sort option is Last Name, sort alphabetically ascending by Last Name. Secondary sort is by First Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
-- Each Person will be clickable and when clicked, the View changes to Genealogy and the Person clicked becomes the Root Person. The Sort option is stored, then changed to None (Blank).
+- Each Person's Name is clickable. When clicked, the View changes to Genealogy and the Person clicked becomes the Root Person. The Sort option is stored, then changed to None (Blank).
 - If Search produces no results, display "No people found."
 
 ## Genealogy View
@@ -75,7 +76,8 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - The numbers in parenthesis do not change based on the entries highlighted by the Search text box.
 - When Search is empty, no rows are highlighted based on Search.
 - If the Root Person has zero of a certain Generation, that Generation is omitted, with the exception of the Children Generation, in which case that section is shown but with the message "No Children".
-- Each Person will be clickable and when clicked, that Person becomes the Root Person. 
+- Each Person's Name is clickable. When a descendant's Name is clicked, that Person becomes the Root Person.
+- When the current Root Person's Name is clicked, that Person's parent becomes the new Root Person. If the current Root Person has no parent, the Root Person does not change.
 - The Children table is sorted by Birthday, ascending (oldest first).
 - For Grandchildren, Great Grandchildren, and Great Great Grandchildren:
   - Include an additional column called Parent, which displays the Person's immediate parent.
