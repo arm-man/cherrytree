@@ -2,9 +2,21 @@
   --background: #fdebcf;
   --foreground: #28201d;
   --highlight: #f3979d;
+  --background-glow: rgba(243, 151, 157, 0.3);
   --accent-strong: #9d3541;
   --muted: #7b6661;
   --surface: rgba(255, 255, 255, 0.76);
+}
+
+/* Theme the full canvas only while an admin layout is present. */
+body:has([data-theme="admin"]) {
+  --background: #e8f1f5;
+  --foreground: #111f27;
+  --highlight: #5b8fa8;
+  --background-glow: rgba(91, 143, 168, 0.3);
+  --accent-strong: #315b70;
+  --muted: #526975;
+  --highlight-soft: color-mix(in srgb, var(--highlight) 20%, var(--background));
 }
 
 html {
@@ -25,7 +37,7 @@ body {
   background:
     radial-gradient(
       circle at 85% 5%,
-      rgba(243, 151, 157, 0.3),
+      var(--background-glow),
       transparent 28rem
     ),
     var(--background);

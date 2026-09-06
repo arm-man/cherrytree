@@ -19,7 +19,7 @@ VALUES
     (2, 1, 'Starley', 'Bullard', DATE '1938-01-24', NULL, 'Ralph Bullard'),
     (3, 1, 'Ronald', 'Cherry', DATE '1939-11-04', DATE '2024-03-29', 'Ellen Cherry'),
     (4, 1, 'Mary', 'Burleson', DATE '1941-10-04', NULL, 'Paul Burleson'),
-    (5, 1, 'Jenny', 'McMonigle', DATE '1943-08-06', NULL, 'Tom McMonigle'),
+    (5, 1, 'Virginia (Jenny)', 'McMonigle', DATE '1943-08-06', NULL, 'Tom McMonigle'),
     (6, 1, 'Carmen', 'Cherry', DATE '1946-06-25', DATE '1990-01-01', NULL),
     (7, 1, 'John', 'Cherry', DATE '1947-06-29', '2025-02-10', 'Jacqueline Cherry; Karen Cherry'),
     (8, 1, 'Fred', 'Cherry', DATE '1948-06-18', NULL, NULL),

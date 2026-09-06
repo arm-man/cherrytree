@@ -49,7 +49,7 @@
   cursor: not-allowed;
 }
 .admin input[aria-invalid="true"] {
-  border-color: var(--accent-strong);
+  border-color: #8a1c2b;
   border-width: 2px;
 }
 .search {
@@ -72,13 +72,14 @@
 }
 .table td {
   height: 3rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(49, 91, 112, 0.07);
 }
 .table tr {
   cursor: pointer;
 }
 .table tr:hover td,
 .table tr:focus-within td {
-  background: #f9d8c7;
+  background: var(--highlight-soft);
 }
 .table a {
   display: inline-flex;
@@ -125,7 +126,7 @@
   padding: 0.8rem;
   border: 1px solid var(--accent-strong);
   border-radius: 0.5rem;
-  background: #fdebcf;
+  background: var(--background);
 }
 .actions {
   display: flex;
@@ -149,7 +150,7 @@
   border: 1px solid var(--muted);
   border-radius: 0.65rem;
   background: #fff;
-  box-shadow: 0 0.5rem 1rem #56382f20;
+  box-shadow: 0 0.5rem 1rem #315b7020;
 }
 .options li {
   padding: 0.8rem;
@@ -159,7 +160,7 @@
 }
 .options li[data-active="true"],
 .options li:hover {
-  background: #f9d8c7;
+  background: var(--highlight-soft);
 }
 .options li[aria-selected="true"] {
   font-weight: 700;

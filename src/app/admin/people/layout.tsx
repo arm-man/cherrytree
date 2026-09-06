@@ -12,7 +12,7 @@ export default function AdminPeopleLayout({
   children: ReactNode;
 }) {
   return (
-    <main className={`page-shell ${styles.admin}`}>
+    <main className={`page-shell ${styles.admin}`} data-theme="admin">
       <Link href="/" className="wordmark" aria-label="Cherry Tree home">
         <Image
           src={birthcake}

@@ -105,6 +105,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 ## Administration
 
+- Admin pages use #E8F1F5 as the main background color and #5B8FA8 as the secondary/highlight color to distinguish them from regular pages.
 - The initial administration feature is part of the same Cherry Tree application and is available without authentication. Administrator authentication may be added later.
 - The Admin People List is available at `/admin/people`.
   - Load all People and sort them alphabetically by Full Name.
