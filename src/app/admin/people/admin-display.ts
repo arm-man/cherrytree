@@ -2,18 +2,18 @@ export function formatAdminDate(value: string | null): string {
   if (!value) return "";
   const [year, month, day] = value.split("-").map(Number);
   const months = [
-    "January",
-    "February",
-    "March",
-    "April",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
     "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
   return `${months[month - 1]} ${day}, ${year}`;
 }

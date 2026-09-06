@@ -5,6 +5,8 @@ import { useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import { getLocalDateOnly } from "@/app/date-calculations";
 import type { Person } from "@/server/people";
+import type { AdminPerson } from "@/server/admin-people-db";
+import { formatPhoneNumber } from "./phone-number";
 import { adminPeopleUrl } from "./admin-display";
 import { ParentSelect } from "./ParentSelect";
 import {
@@ -13,6 +15,8 @@ import {
   isValidDateOnly,
   PersonValidationError,
   validatePerson,
+  validatePhoneNumber,
+  validateSpouseDates,
 } from "./person-validation";
 import type { PersonValues } from "./person-validation";
 import styles from "./admin.module.css";
@@ -23,6 +27,9 @@ const emptyValues: PersonValues = {
   birthday: "",
   deathday: "",
   spouse: "",
+  phoneNumber: "",
+  spouseBirthday: "",
+  spouseDeathday: "",
   parentId: null,
 };
 const fields = [
@@ -30,7 +37,21 @@ const fields = [
   { name: "lastName", label: "Last Name", type: "text", required: true },
   { name: "birthday", label: "Birthday", type: "date", required: true },
   { name: "deathday", label: "Death Day", type: "date", required: false },
+  { name: "parentId", label: "Parent", type: "parent", required: true },
+  { name: "phoneNumber", label: "Phone Number", type: "tel", required: false },
   { name: "spouse", label: "Spouse", type: "text", required: false },
+  {
+    name: "spouseBirthday",
+    label: "Spouse's Birthday",
+    type: "date",
+    required: false,
+  },
+  {
+    name: "spouseDeathday",
+    label: "Spouse's Death Day",
+    type: "date",
+    required: false,
+  },
 ] as const;
 
 function getToday(): string {
@@ -54,7 +75,7 @@ export function PersonForm({
   search,
 }: {
   people: Person[];
-  person?: Person;
+  person?: AdminPerson;
   search: string;
 }) {
   const router = useRouter();
@@ -66,6 +87,9 @@ export function PersonForm({
           birthday: person.birthday,
           deathday: person.deathday ?? "",
           spouse: person.spouse ?? "",
+          phoneNumber: formatPhoneNumber(person.phoneNumber),
+          spouseBirthday: person.spouseBirthday ?? "",
+          spouseDeathday: person.spouseDeathday ?? "",
           parentId: person.parentId,
         }
       : emptyValues,
@@ -108,10 +132,39 @@ export function PersonForm({
 
   function validateField(field: keyof PersonValues): void {
     try {
-      validatePerson(values, people, getToday(), person?.id);
+      // Validate new optional fields independently, even if required fields
+      // elsewhere in the form are still empty.
+      if (field === "phoneNumber") {
+        const phoneNumber = validatePhoneNumber(values.phoneNumber);
+        setValues((current) => ({
+          ...current,
+          phoneNumber: formatPhoneNumber(phoneNumber),
+        }));
+      } else if (field === "spouseBirthday" || field === "spouseDeathday") {
+        validateSpouseDates(
+          values.spouseBirthday,
+          values.spouseDeathday,
+          getToday(),
+        );
+        setErrors((current) => ({
+          ...current,
+          spouseBirthday: undefined,
+          spouseDeathday: undefined,
+        }));
+      } else {
+        validatePerson(values, people, getToday(), person?.id);
+      }
     } catch (error: unknown) {
-      if (error instanceof PersonValidationError && error.field === field)
-        setErrors((current) => ({ ...current, [field]: error.message }));
+      if (
+        error instanceof PersonValidationError &&
+        error.field &&
+        (error.field === field ||
+          field === "spouseBirthday" ||
+          field === "spouseDeathday")
+      ) {
+        const errorField = error.field;
+        setErrors((current) => ({ ...current, [errorField]: error.message }));
+      }
     }
   }
 
@@ -202,68 +255,80 @@ export function PersonForm({
         {formError && <p className={styles.error}>{formError}</p>}
       </div>
       <fieldset disabled={pending}>
-        {fields.map((field) => (
-          <div key={field.name} className={styles.field}>
-            <label htmlFor={field.name}>
-              {field.label}
-              {!field.required && (
-                <span className={styles.optional}> (optional)</span>
-              )}
-            </label>
-            <input
-              id={field.name}
-              name={field.name}
-              type={field.type}
-              required={field.required}
-              max={field.type === "date" ? (today ?? undefined) : undefined}
-              min={
-                field.name === "deathday" && isValidDateOnly(values.birthday)
-                  ? values.birthday
-                  : undefined
-              }
-              value={values[field.name] ?? ""}
-              onChange={(event) => change(field.name, event.target.value)}
-              onBlur={() => validateField(field.name)}
-              aria-invalid={Boolean(errors[field.name])}
-              aria-describedby={
-                errors[field.name] ? `${field.name}-error` : undefined
-              }
-            />
-            {errors[field.name] && (
-              <p
-                className={styles.error}
-                id={`${field.name}-error`}
-                role="alert"
-              >
-                {errors[field.name]}
+        {fields.map((field) =>
+          field.name === "parentId" ? (
+            <div key={field.name} className={styles.field}>
+              <label htmlFor="parentId">Parent</label>
+              <ParentSelect
+                key={resetCount}
+                options={options}
+                selected={selectedParent}
+                disabled={pending || Boolean(parentDisabled)}
+                error={errors.parentId}
+                onChange={(id) => change("parentId", id)}
+                onBlur={() => validateField("parentId")}
+              />
+              <p id="parent-help" className={styles.help}>
+                {person?.id === 1
+                  ? "This Person has no Parent."
+                  : parentDisabled
+                    ? "Enter a valid Birthday to choose a Parent."
+                    : "Select a Parent who was at least 15 years old on Birthday."}
               </p>
-            )}
-          </div>
-        ))}
-        <div className={styles.field}>
-          <label htmlFor="parentId">Parent</label>
-          <ParentSelect
-            key={resetCount}
-            options={options}
-            selected={selectedParent}
-            disabled={pending || Boolean(parentDisabled)}
-            error={errors.parentId}
-            onChange={(id) => change("parentId", id)}
-            onBlur={() => validateField("parentId")}
-          />
-          <p id="parent-help" className={styles.help}>
-            {person?.id === 1
-              ? "This Person has no Parent."
-              : parentDisabled
-                ? "Enter a valid Birthday to choose a Parent."
-                : "Select a Parent who was at least 15 years old on Birthday."}
-          </p>
-          {errors.parentId && (
-            <p className={styles.error} id="parentId-error" role="alert">
-              {errors.parentId}
-            </p>
-          )}
-        </div>
+              {errors.parentId && (
+                <p className={styles.error} id="parentId-error" role="alert">
+                  {errors.parentId}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div key={field.name} className={styles.field}>
+              <label htmlFor={field.name}>
+                {field.label}
+                {!field.required && (
+                  <span className={styles.optional}> (optional)</span>
+                )}
+              </label>
+              <input
+                className={
+                  field.name.startsWith("spouse")
+                    ? styles.spouseInput
+                    : undefined
+                }
+                id={field.name}
+                name={field.name}
+                type={field.type}
+                required={field.required}
+                max={field.type === "date" ? (today ?? undefined) : undefined}
+                min={
+                  field.name === "deathday" && isValidDateOnly(values.birthday)
+                    ? values.birthday
+                    : field.name === "spouseDeathday" &&
+                        values.spouseBirthday &&
+                        isValidDateOnly(values.spouseBirthday)
+                      ? values.spouseBirthday
+                      : undefined
+                }
+                value={values[field.name] ?? ""}
+                onChange={(event) => change(field.name, event.target.value)}
+                onBlur={() => validateField(field.name)}
+                aria-invalid={Boolean(errors[field.name])}
+                aria-describedby={
+                  errors[field.name] ? `${field.name}-error` : undefined
+                }
+              />
+              {errors[field.name] && (
+                <p
+                  className={styles.error}
+                  id={`${field.name}-error`}
+                  role="alert"
+                >
+                  {errors[field.name]}
+                </p>
+              )}
+            </div>
+          ),
+        )}
       </fieldset>
       <div className={styles.actions}>
         <button className={styles.primary} type="submit" disabled={pending}>

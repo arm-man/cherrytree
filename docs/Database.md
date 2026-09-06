@@ -42,11 +42,16 @@ Stores one row for each person.
 | `birthday` | `date` | No | The birth date of the Person. |
 | `deathday` | `date` | Yes | The date of death of the Person. |
 | `spouse` | `text` | Yes | The Person's spouse. |
+| `phone_number` | `text` | Yes | Optional U.S. phone number, stored as 10 digits. |
+| `spouse_birthday` | `date` | Yes | Optional spouse birth date. |
+| `spouse_deathday` | `date` | Yes | Optional spouse death date. |
 | `created_at` | `timestamptz` | No | Person creation time. Use DEFAULT NOW().|
 
 Constraints:
 
 - Primary key on `id`.
+- `people_spouse_deathday_requires_birthday_check`: `spouse_deathday IS NULL OR spouse_birthday IS NOT NULL`.
+- The three columns added by `003_migration_people_phone_spouse_dates.sql` are nullable with no non-null default; existing rows need no changes. Phone format validation belongs to the application, with no database format constraint.
 - parent_id is a self-referencing foreign key to people(id).
 - Use the default non-cascading foreign-key behavior so PostgreSQL prevents deleting a Person while another Person references that Person as a parent.
 - parent_id may be NULL only for the single top-level Person.
@@ -110,6 +115,7 @@ For administrative creation and editing:
 - Death Day is nullable. When provided, it must not be before Birthday or in the future.
 - Spouse is nullable. Normalize a blank Spouse to null.
 - A blank Death Day is stored as null.
+- Phone Number and spouse dates are nullable; blank values become null. Normalize and validate phones and spouse dates using the rules in `Product.md`, including allowing equal spouse birth/death dates.
 - id=1 must have parent_id of null. Every other Person must have a non-null parent_id that references an existing Person.
 - The proposed Parent must have been at least 15 years old on the Person's Birthday.
 - A Person cannot be their own Parent.
@@ -119,4 +125,4 @@ For administrative creation and editing:
 
 ## Manual Database Smoke Tests
 
-Perform manual smoke tests against the development database. Create people entries as needed.
+Perform manual smoke tests against the development database. See `AdminPeopleSmokeTests.md` for the phone and spouse-date checklist. Apply numbered migrations before running the updated admin pages.

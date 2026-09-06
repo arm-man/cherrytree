@@ -111,12 +111,17 @@ Request body:
   "birthday": "2026-09-05",
   "deathday": null,
   "spouse": null,
+  "phoneNumber": null,
+  "spouseBirthday": null,
+  "spouseDeathday": null,
   "parentId": 42
 }
 ```
 
 - `firstName`, `lastName`, `birthday`, and `parentId` are required.
-- `deathday` and `spouse` are nullable.
+- `deathday`, `spouse`, `phoneNumber`, `spouseBirthday`, and `spouseDeathday` are optional and nullable. Omitted, null, or blank optional values are stored as null, including on PUT.
+- `phoneNumber` accepts a string containing 10 U.S. digits with spaces, parentheses, hyphens, or periods; the server stores digits only. Country codes, extensions, and other characters are rejected.
+- Spouse dates use YYYY-MM-DD strings. Spouse Birthday cannot be future; Spouse Death Day requires Spouse Birthday, must be on or after it, and cannot be future. Equal birth/death dates are valid.
 - The database generates the new Person's id; the id is not included in the request URL or request body.
 
 Successful response:
@@ -136,6 +141,9 @@ Expected errors include:
 - `REQUIRED_FIELD_MISSING`
 - `INVALID_BIRTHDAY`
 - `INVALID_DEATHDAY`
+- `INVALID_PHONE_NUMBER`
+- `INVALID_SPOUSE_BIRTHDAY`
+- `INVALID_SPOUSE_DEATHDAY`
 - `INVALID_PARENT`
 - `PARENT_TOO_YOUNG`
 - `RELATIONSHIP_CYCLE`
@@ -167,7 +175,7 @@ Expected errors include the Create a Person errors and:
 
 All validation errors use `400 Bad Request`. A missing Person uses `404 Not Found`.
 
-For both endpoints, blank optional Death Day and Spouse values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
+For both endpoints, blank optional Death Day, Spouse, Phone Number, and spouse-date values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
 
 ## Server-Rendered Page Data
 

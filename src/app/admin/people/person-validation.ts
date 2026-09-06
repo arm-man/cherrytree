@@ -1,4 +1,6 @@
 import type { Person } from "@/server/people";
+import type { AdminPerson } from "@/server/admin-people-db";
+import { isValidPhoneNumber, normalizePhoneNumber } from "./phone-number.ts";
 
 export interface PersonValues {
   firstName: string;
@@ -6,6 +8,9 @@ export interface PersonValues {
   birthday: string;
   deathday: string | null;
   spouse: string | null;
+  phoneNumber: string | null;
+  spouseBirthday: string | null;
+  spouseDeathday: string | null;
   parentId: number | null;
 }
 
@@ -13,6 +18,9 @@ export type PersonErrorCode =
   | "REQUIRED_FIELD_MISSING"
   | "INVALID_BIRTHDAY"
   | "INVALID_DEATHDAY"
+  | "INVALID_PHONE_NUMBER"
+  | "INVALID_SPOUSE_BIRTHDAY"
+  | "INVALID_SPOUSE_DEATHDAY"
   | "INVALID_PARENT"
   | "PARENT_TOO_YOUNG"
   | "RELATIONSHIP_CYCLE"
@@ -84,7 +92,7 @@ export function getFullName(
   return `${person.firstName} ${person.lastName}`;
 }
 
-export function sortByFullName(people: readonly Person[]): Person[] {
+export function sortByFullName<T extends Person>(people: readonly T[]): T[] {
   return [...people].sort((a, b) =>
     getFullName(a).localeCompare(getFullName(b), "en", { sensitivity: "base" }),
   );
@@ -108,6 +116,62 @@ export function getEligibleParents(
         isEligibleParentBirthday(person.birthday, birthday),
     ),
   );
+}
+
+export function validatePhoneNumber(input: unknown): string | null {
+  if (input == null || (typeof input === "string" && !input.trim()))
+    return null;
+  if (typeof input !== "string" || !isValidPhoneNumber(input)) {
+    throw new PersonValidationError(
+      "INVALID_PHONE_NUMBER",
+      "Enter a U.S. Phone Number with exactly 10 digits, without a country code or extension.",
+      "phoneNumber",
+    );
+  }
+  return normalizePhoneNumber(input);
+}
+
+export function validateSpouseDates(
+  birthday: unknown,
+  deathday: unknown,
+  today: string,
+): Pick<PersonValues, "spouseBirthday" | "spouseDeathday"> {
+  const spouseBirthday =
+    typeof birthday === "string" && !birthday.trim()
+      ? null
+      : (birthday ?? null);
+  const spouseDeathday =
+    typeof deathday === "string" && !deathday.trim()
+      ? null
+      : (deathday ?? null);
+  // Validated ISO calendar dates sort chronologically without timezone conversion.
+  if (
+    spouseBirthday !== null &&
+    (typeof spouseBirthday !== "string" ||
+      !isValidDateOnly(spouseBirthday) ||
+      spouseBirthday > today)
+  ) {
+    throw new PersonValidationError(
+      "INVALID_SPOUSE_BIRTHDAY",
+      "Enter a valid Spouse's Birthday that is not in the future.",
+      "spouseBirthday",
+    );
+  }
+  if (
+    spouseDeathday !== null &&
+    (typeof spouseDeathday !== "string" ||
+      !isValidDateOnly(spouseDeathday) ||
+      spouseBirthday === null ||
+      spouseDeathday < spouseBirthday ||
+      spouseDeathday > today)
+  ) {
+    throw new PersonValidationError(
+      "INVALID_SPOUSE_DEATHDAY",
+      "Enter Spouse's Birthday and a valid Spouse's Death Day on or after it and not in the future.",
+      "spouseDeathday",
+    );
+  }
+  return { spouseBirthday, spouseDeathday };
 }
 
 export function validatePerson(
@@ -187,6 +251,14 @@ export function validatePerson(
       "deathday",
     );
   }
+  const phoneNumber = validatePhoneNumber(
+    "phoneNumber" in input ? input.phoneNumber : null,
+  );
+  const spouseDates = validateSpouseDates(
+    "spouseBirthday" in input ? input.spouseBirthday : null,
+    "spouseDeathday" in input ? input.spouseDeathday : null,
+    today,
+  );
   const spouse = "spouse" in input ? input.spouse : null;
   if (spouse != null && typeof spouse !== "string") {
     throw new PersonValidationError(
@@ -257,13 +329,15 @@ export function validatePerson(
     birthday: input.birthday,
     deathday: typeof deathday === "string" ? deathday.trim() || null : null,
     spouse: typeof spouse === "string" ? spouse.trim() || null : null,
+    phoneNumber,
+    ...spouseDates,
     parentId: typeof parentId === "number" ? parentId : null,
   };
 }
 
 export function hasPersonChanges(
   values: PersonValues,
-  stored: Person,
+  stored: AdminPerson,
 ): boolean {
   return (
     values.firstName !== stored.firstName.trim() ||
@@ -271,6 +345,9 @@ export function hasPersonChanges(
     values.birthday !== stored.birthday ||
     values.deathday !== (stored.deathday?.trim() || null) ||
     values.spouse !== (stored.spouse?.trim() || null) ||
+    values.phoneNumber !== stored.phoneNumber ||
+    values.spouseBirthday !== stored.spouseBirthday ||
+    values.spouseDeathday !== stored.spouseDeathday ||
     values.parentId !== stored.parentId
   );
 }

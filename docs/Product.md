@@ -20,7 +20,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 ## Data
 
-- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day and Spouse are optional and may be null/blank.
+- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day, Spouse, Phone Number, Spouse's Birthday, and Spouse's Death Day are optional and may be null/blank. Phone Number and spouse dates are administrative data only and are not shown on public pages.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
 - Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
@@ -94,7 +94,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - Hover, keyboard focus, click, or tap reveal a small popup with "Died March 14, 2008" and "Would be 100 today", using that Person's Death Day and hypothetical completed age as of today. Activation keeps the popup open; activating again, pressing Escape, clicking/tapping outside, or moving focus away dismisses it. Hover previews remain available while the pointer is over the age or popup.
   - Retain visible keyboard focus. Keep the popup within the viewport and outside table clipping, without adding horizontal scrolling; dismiss it when the viewport is resized or scrolled.
 - Neither View has a Death Day column. Keep Death Day in stored and internal Person data for age calculations, death details, and the existing Death Day sort.
-- Dates use full English month names, e.g. March 14, 2008 or May 17, 1947, matching the existing Birthed display. Birthday and Death Day remain calendar dates without time-zone conversion.
+- Public dates use full English month names, e.g. March 14, 2008 or May 17, 1947, matching the existing Birthed display. Birthday and Death Day remain calendar dates without time-zone conversion.
 - Children to be shown as a number.
 - If there is no Spouse, that field remains blank.
 - The Spouse is not a Person in the database and is not clickable. A Spouse is simply an informational field that accompanies a Person. A Person may have one Spouse or no Spouse; cases of remarrying are not considered.
@@ -109,19 +109,23 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - The initial administration feature is part of the same Cherry Tree application and is available without authentication. Administrator authentication may be added later.
 - The Admin People List is available at `/admin/people`.
   - Load all People and sort them alphabetically by Full Name.
-  - Each Person is a clickable entry displaying Full Name, Birthday, Death Day, the Parent's Full Name, and Spouse.
-  - Optional Death Day and Spouse values remain blank when they are null. The single top-level Person's Parent remains blank.
+  - Each Person is a clickable entry with columns in exactly this order: Full Name, Birthday, Death Day, Parent's Full Name, Phone Number, Spouse (Sp), Sp Birthday, Sp Death Day.
+  - Use compact table text and cell spacing, with more available width on large screens, to minimize horizontal scrolling. Use slightly larger text with dense rows and minimal vertical gaps to show more names at once. Long names and column headings may wrap; dates and phone numbers stay on one line. Keep every value fully accessible, name links at least 24 pixels tall, and horizontal scrolling where needed.
+  - All null optional values remain blank. The single top-level Person's Parent remains blank. Admin date displays, including Parent options, use abbreviated English months, e.g. Dec 14, 1975; public date formatting is unchanged.
   - A Search text box filters the list immediately using a case-insensitive partial-text match against Full Name or Spouse. Leading and trailing whitespace in the Search text is ignored.
   - If Search produces no results, display "No people found."
   - Preserve the Search text when returning from an Add Person or Edit Person page.
   - An Add Person button navigates to `/admin/people/new`.
   - Clicking a Person navigates to `/admin/people/[id]/edit` for that Person.
-- The Add Person and Edit Person forms contain First Name, Last Name, Birthday, Death Day, Spouse, and Parent.
+- The Add Person and Edit Person forms contain fields in exactly this order: First Name, Last Name, Birthday, Death Day, Parent, Phone Number, Spouse, Spouse's Birthday, Spouse's Death Day.
   - First Name, Last Name, Birthday, and Parent are required, except that id=1 is the single top-level Person and has no Parent.
-  - Death Day and Spouse are optional. Blank optional values are stored as null.
+  - Death Day, Phone Number, Spouse, Spouse's Birthday, and Spouse's Death Day are optional. Blank optional values are stored as null and existing values can be cleared.
   - Birthday must not be in the future. Death Day, when provided, must not be before Birthday or in the future.
+  - Spouse's Birthday must not be in the future. Spouse's Death Day requires Spouse's Birthday and must be on or after it and not in the future. Equal birth/death dates are allowed for both the Person and Spouse. Spouse dates do not require a Spouse name.
+  - Phone Number accepts exactly 10 U.S. digits after removing spaces, parentheses, hyphens, and periods. Reject other characters, country codes, and extensions; do not validate area codes or exchanges. Store digits only; display as (703) 555-1234 in the list and edit form. Validate on both client and server.
   - The Parent control is a searchable dropdown sorted alphabetically by Full Name. Each option displays the Person's Full Name and Birthday.
-  - Birthday appears before Parent in the form. On the Add Person page, Parent remains disabled until a valid Birthday is entered.
+  - The Spouse, Spouse's Birthday, and Spouse's Death Day inputs use a subtle contrasting background tint.
+  - Parent appears immediately after Death Day and before Phone Number in the form. On the Add Person page, Parent remains disabled until a valid Birthday is entered.
   - A Person is eligible to be selected as Parent only if the proposed Parent was at least 15 years old when the Person was born.
   - On the Edit Person page, the Person being edited and all of that Person's descendants are excluded from the Parent options.
   - When editing id=1, Parent displays no value and is disabled. No other Person may have a null Parent.

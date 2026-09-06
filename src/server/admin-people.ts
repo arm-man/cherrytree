@@ -12,11 +12,13 @@ import {
   getValidationDate,
   insertPerson,
   insertPersonLog,
+  readAdminPeople,
   updatePerson,
   withPeopleTransaction,
 } from "./admin-people-db";
 import { logServerError } from "./db";
-import { getPeople, validateParentRelationships } from "./people";
+import { validateParentRelationships } from "./people";
+import type { AdminPerson } from "./admin-people-db";
 import type { Person } from "./people";
 
 const PERSON_COLUMNS: [keyof PersonValues, string][] = [
@@ -25,6 +27,9 @@ const PERSON_COLUMNS: [keyof PersonValues, string][] = [
   ["birthday", "birthday"],
   ["deathday", "deathday"],
   ["spouse", "spouse"],
+  ["phoneNumber", "phone_number"],
+  ["spouseBirthday", "spouse_birthday"],
+  ["spouseDeathday", "spouse_deathday"],
   ["parentId", "parent"],
 ];
 
@@ -70,9 +75,9 @@ export async function logPeopleError(
   await logServerError(`${context} ${detail}`);
 }
 
-export async function getAdminPeople(): Promise<Person[]> {
+export async function getAdminPeople(): Promise<AdminPerson[]> {
   try {
-    return sortByFullName(await getPeople());
+    return sortByFullName(await readAdminPeople());
   } catch (error: unknown) {
     await logPeopleError("Failed to load administrative People data.", error);
     throw new Error("Something went wrong. Please try again.");
@@ -84,7 +89,7 @@ export async function savePerson(
   personId?: number,
 ): Promise<number> {
   return withPeopleTransaction(async (client) => {
-    const people = await getPeople(client);
+    const people = await readAdminPeople(client);
     const stored = people.find((person) => person.id === personId);
     if (personId !== undefined && !stored) {
       throw new PersonValidationError("PERSON_NOT_FOUND", "Person not found.");

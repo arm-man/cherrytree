@@ -8,19 +8,24 @@ import {
   PersonValidationError,
   validatePerson,
 } from "./person-validation.ts";
-import type { Person } from "@/server/people";
+import type { AdminPerson } from "@/server/admin-people-db";
+import { formatPhoneNumber } from "./phone-number.ts";
+import { formatAdminDate } from "./admin-display.ts";
 
 const today = "2026-09-05";
-const root: Person = {
+const root: AdminPerson = {
   id: 1,
   firstName: "Virginia",
   lastName: "Cherry",
   birthday: "1947-05-17",
   deathday: "2020-01-01",
   spouse: null,
+  phoneNumber: null,
+  spouseBirthday: null,
+  spouseDeathday: null,
   parentId: null,
 };
-const child: Person = {
+const child: AdminPerson = {
   ...root,
   id: 2,
   firstName: "Amy",
@@ -28,7 +33,7 @@ const child: Person = {
   deathday: null,
   parentId: 1,
 };
-const grandchild: Person = {
+const grandchild: AdminPerson = {
   ...child,
   id: 3,
   firstName: "Zoe",
@@ -77,6 +82,9 @@ test("normalizes names and blank optional fields while retaining date-only strin
     birthday: "2000-01-01",
     deathday: null,
     spouse: null,
+    phoneNumber: null,
+    spouseBirthday: null,
+    spouseDeathday: null,
     parentId: 1,
   });
   assert.equal(
@@ -196,7 +204,147 @@ test("normalized unchanged values compare equal, while each editable field is de
     { birthday: "1963-01-01" },
     { deathday: today },
     { spouse: null },
+    { phoneNumber: "7035551234" },
+    { spouseBirthday: "1975-12-14" },
+    { spouseDeathday: "2008-03-02" },
     { parentId: 3 },
   ])
     assert.equal(hasPersonChanges({ ...values, ...change }, stored), true);
+});
+
+test("phone numbers normalize supported formatting and reject invalid digits or characters", () => {
+  for (const phoneNumber of [
+    "7035551234",
+    "703-555-1234",
+    "(703) 555-1234",
+    "703 555 1234",
+    "703.555.1234",
+  ]) {
+    const values = validatePerson({ ...valid, phoneNumber }, people, today);
+    assert.equal(values.phoneNumber, "7035551234");
+    assert.equal(formatPhoneNumber(values.phoneNumber), "(703) 555-1234");
+  }
+  for (const phoneNumber of [
+    "703555123",
+    "17035551234",
+    "+1 (703) 555-1234",
+    "7035551234x",
+    "703/555/1234",
+    "7035551234 ext 5",
+    "()-.",
+    7035551234,
+    false,
+    {},
+  ]) {
+    rejects({ ...valid, phoneNumber }, "INVALID_PHONE_NUMBER");
+  }
+  assert.equal(
+    validatePerson({ ...valid, phoneNumber: "0000000000" }, people, today)
+      .phoneNumber,
+    "0000000000",
+  );
+});
+
+test("optional admin values can be omitted, null, or cleared; clearing counts as a change", () => {
+  const stored: AdminPerson = {
+    ...child,
+    phoneNumber: "7035551234",
+    spouseBirthday: "1975-12-14",
+    spouseDeathday: "2008-03-02",
+  };
+  for (const empty of [undefined, null, "", "   "]) {
+    const values = validatePerson(
+      {
+        ...valid,
+        phoneNumber: empty,
+        spouseBirthday: empty,
+        spouseDeathday: empty,
+      },
+      people,
+      today,
+    );
+    assert.equal(values.phoneNumber, null);
+    assert.equal(values.spouseBirthday, null);
+    assert.equal(values.spouseDeathday, null);
+    assert.equal(
+      hasPersonChanges({ ...stored, phoneNumber: values.phoneNumber }, stored),
+      true,
+    );
+    assert.equal(
+      hasPersonChanges(
+        {
+          ...stored,
+          spouseBirthday: values.spouseBirthday,
+          spouseDeathday: values.spouseDeathday,
+        },
+        stored,
+      ),
+      true,
+    );
+  }
+  const { id: ignoredId, ...editable } = stored;
+  void ignoredId;
+  const values = validatePerson(
+    { ...editable, phoneNumber: "(703) 555-1234" },
+    people,
+    today,
+    stored.id,
+  );
+  assert.equal(hasPersonChanges(values, stored), false);
+});
+
+test("spouse dates accept birthday alone and equal birth/death dates, including today", () => {
+  assert.equal(
+    validatePerson({ ...valid, spouseBirthday: today }, people, today)
+      .spouseDeathday,
+    null,
+  );
+  for (const spouseBirthday of ["1975-12-14", today]) {
+    assert.equal(
+      validatePerson(
+        { ...valid, spouseBirthday, spouseDeathday: spouseBirthday },
+        people,
+        today,
+      ).spouseDeathday,
+      spouseBirthday,
+    );
+  }
+  assert.equal(
+    validatePerson(
+      { ...valid, spouseBirthday: "1975-12-14", spouseDeathday: "2008-03-02" },
+      people,
+      today,
+    ).spouseDeathday,
+    "2008-03-02",
+  );
+});
+
+test("spouse dates reject missing birthday, earlier death, future dates and malformed values", () => {
+  rejects({ ...valid, spouseDeathday: today }, "INVALID_SPOUSE_DEATHDAY");
+  rejects(
+    { ...valid, spouseBirthday: "2000-01-01", spouseDeathday: "1999-12-31" },
+    "INVALID_SPOUSE_DEATHDAY",
+  );
+  for (const invalid of [
+    "2026-09-06",
+    "2026-02-29",
+    "2026-04-31",
+    "2026-01-01T00:00:00Z",
+    20000101,
+    false,
+    {},
+  ]) {
+    rejects({ ...valid, spouseBirthday: invalid }, "INVALID_SPOUSE_BIRTHDAY");
+    rejects(
+      { ...valid, spouseBirthday: "1975-12-14", spouseDeathday: invalid },
+      "INVALID_SPOUSE_DEATHDAY",
+    );
+  }
+});
+
+test("admin display abbreviates months and leaves absent values blank", () => {
+  assert.equal(formatAdminDate("1975-12-14"), "Dec 14, 1975");
+  assert.equal(formatAdminDate("2008-03-02"), "Mar 2, 2008");
+  assert.equal(formatAdminDate(null), "");
+  assert.equal(formatPhoneNumber(null), "");
 });

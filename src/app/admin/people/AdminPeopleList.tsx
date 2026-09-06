@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { filterPeopleBySearch } from "@/app/people-calculations";
-import type { Person } from "@/server/people";
+import type { AdminPerson } from "@/server/admin-people-db";
+import { formatPhoneNumber } from "./phone-number";
 import { adminPeopleUrl, formatAdminDate } from "./admin-display";
 import { getFullName } from "./person-validation";
 import styles from "./admin.module.css";
 
-export function AdminPeopleList({ people }: { people: Person[] }) {
+export function AdminPeopleList({ people }: { people: AdminPerson[] }) {
   const search = useSearchParams().get("search") ?? "";
   const router = useRouter();
   const matches = filterPeopleBySearch(people, search);
@@ -56,7 +57,10 @@ export function AdminPeopleList({ people }: { people: Person[] }) {
                 "Birthday",
                 "Death Day",
                 "Parent's Full Name",
-                "Spouse",
+                "Phone Number",
+                "Spouse (Sp)",
+                "Sp Birthday",
+                "Sp Death Day",
               ].map((label) => (
                 <th key={label} scope="col">
                   {label}
@@ -92,7 +96,10 @@ export function AdminPeopleList({ people }: { people: Person[] }) {
                   <td>{formatAdminDate(person.birthday)}</td>
                   <td>{formatAdminDate(person.deathday)}</td>
                   <td>{parent ? getFullName(parent) : ""}</td>
+                  <td>{formatPhoneNumber(person.phoneNumber)}</td>
                   <td>{person.spouse ?? ""}</td>
+                  <td>{formatAdminDate(person.spouseBirthday)}</td>
+                  <td>{formatAdminDate(person.spouseDeathday)}</td>
                 </tr>
               );
             })}
