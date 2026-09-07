@@ -3,17 +3,9 @@ import "server-only";
 import type { PoolClient, QueryResultRow } from "pg";
 
 import { pool } from "@/server/db";
+import type { PublicPerson, PublicPartner } from "@/app/public-display";
 
-export interface Person {
-  id: number;
-  parentId: number | null;
-  firstName: string;
-  lastName: string;
-  birthday: string;
-  deathday: string | null;
-  spouse: string | null;
-  phoneNumber: string | null;
-}
+export type Person = PublicPerson;
 
 type PersonRow = QueryResultRow & Person;
 
@@ -61,13 +53,25 @@ export async function getPeople(client?: PoolClient): Promise<Person[]> {
        last_name AS "lastName",
        TO_CHAR(birthday, 'YYYY-MM-DD') AS birthday,
        TO_CHAR(deathday, 'YYYY-MM-DD') AS deathday,
-       spouse,
        phone_number AS "phoneNumber"
      FROM people
      ORDER BY id`,
   );
 
   validateParentRelationships(result.rows);
+
+  return result.rows;
+}
+
+export async function getPartners(): Promise<PublicPartner[]> {
+  const result = await pool.query<PublicPartner>(
+    `SELECT id, partner_id AS "partnerId",
+       first_name AS "firstName", last_name AS "lastName",
+       TO_CHAR(birthday, 'YYYY-MM-DD') AS birthday,
+       TO_CHAR(deathday, 'YYYY-MM-DD') AS deathday
+     FROM partners
+     ORDER BY id`,
+  );
 
   return result.rows;
 }

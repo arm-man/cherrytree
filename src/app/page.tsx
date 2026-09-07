@@ -2,15 +2,16 @@ import { connection } from "next/server";
 
 import { PersonList } from "@/app/PersonList";
 import { logServerError } from "@/server/db";
-import { getPeople } from "@/server/people";
+import { getPartners, getPeople } from "@/server/people";
 
 export default async function Home() {
   await connection();
 
   let people;
+  let partners;
 
   try {
-    people = await getPeople();
+    [people, partners] = await Promise.all([getPeople(), getPartners()]);
   } catch (error: unknown) {
     await logServerError("Failed to load valid People data.");
     throw error;
@@ -18,7 +19,7 @@ export default async function Home() {
 
   return (
     <main className="page-shell">
-      <PersonList people={people} />
+      <PersonList people={people} partners={partners} />
     </main>
   );
 }

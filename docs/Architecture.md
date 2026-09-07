@@ -121,9 +121,9 @@ Use a consistent minimal JSON error shape across endpoints.
 Do not use Server Actions for Cherry Tree mutations unless this architecture decision is deliberately revisited.
 Server Components may retrieve data directly through server-side database modules. They do not need to call the application's own HTTP endpoints for reads.
 
-For public pages, the server passes People data to the interactive Client Component using a small application data shape containing only the fields needed by the browser: id, parentId, firstName, lastName, birthday, deathday, spouse, and nullable phoneNumber for Genealogy phone details. List View does not render phone information. birthday and deathday are passed as ISO date-only strings in YYYY-MM-DD format. They must remain calendar dates and must not undergo time-zone conversion.
+For public pages, the server passes Cherry Kin data and associated Spouse data to the interactive Client Component using small application data shapes containing only the fields needed by the browser. Cherry Kin data includes id, parentId, firstName, lastName, birthday, deathday, and nullable phoneNumber for Genealogy phone details. Spouse data comes from `partners` and is associated with its Cherry Kin through `partners.partner_id`. List View does not render phone information. Birthday and Death Day values are passed as ISO date-only strings in YYYY-MM-DD format. They must remain calendar dates and must not undergo time-zone conversion.
 
-After People data is read from PostgreSQL, the server must test the parent relationships for cycles before deriving genealogy data or returning the data to the client. If a cycle is found, the server must log an error to the `logs` table and return a controlled internal error to the client. If database logging fails, the original cycle error must still be returned and the logging failure must be written to the server console.
+After Cherry Kin data is read from PostgreSQL, the server must test the parent relationships for cycles before deriving genealogy data or returning the data to the client. If a cycle is found, the server must log an error to the `logs` table and return a controlled internal error to the client. If database logging fails, the original cycle error must still be returned and the logging failure must be written to the server console.
 
 Do not create a separate REST, GraphQL, or other backend service. The Route Handlers are part of the same Next.js application and deployment.
 
@@ -209,13 +209,15 @@ Use these pages:
 
 Server Components load administrative data; focused Client Components handle local filtering, forms, validation and ordinary HTTP mutation requests. Partners pages reuse the existing admin layout and styles.
 
-Administrative People reads explicitly omit legacy spouse fields and use an AdminPerson shape independent of the public spouse payload. Partners have their own type and validation. The combined list uses a display model with an explicit cherryKin/spouse discriminator, entity id, and six formatted display fields. Two bulk queries plus a name map resolve parents and associated Cherry Kin without N+1 queries.
+Administrative Cherry Kin and Spouse reads use separate data shapes. The combined list uses a display model with an explicit cherryKin/spouse discriminator, entity id, and six formatted display fields. Two bulk queries plus a name map resolve parents and associated Cherry Kin without N+1 queries.
 
 The search and type URL parameters preserve both controls across refreshes and form navigation. Type values are all (default, omitted from URLs), cherryKin and spouse; unknown values become all. Use window.history.replaceState so typing or switching Type filters the loaded rows locally without API/database requests or history entries per keystroke. Search and Type combine with AND logic. Returning from forms loads fresh server data and reapplies both controls.
 
 Successful creation refreshes server-provided dropdown options while keeping the cleared form and confirmation visible. Successful editing navigates to the list with a fresh server read. Parent eligibility remains authoritative on the server; Spouse options contain only Cherry Kin. No deletion is supported.
 
-Phase 1 leaves public queries and behavior on the legacy spouse model. Admin never synchronizes partners with people spouse fields. See Product.md for migration phases and Database.md for the externally managed schema.
+Public and administrative spouse behavior use the `partners` table. `people` stores Cherry Kin; legacy spouse columns remain physically present until Phase 3 but are unused by application spouse behavior.
+
+The public page loads people and partners in two bulk queries. Client display rows have an explicit cherryKin/partner discriminator, distinct entity keys and a separate navigation Cherry Kin id. An id map resolves Spouse names, and child counts and descendant groups use Cherry Kin only. The existing table and age components render both row types; see `Product.md` for inclusion and display rules.
 
 ## Business Logic
 
@@ -243,7 +245,7 @@ This makes them easier to understand and test without creating a formal business
 
 Use PostgreSQL transactions only where multiple database changes must succeed or fail together to preserve valid data.
 
-Person creation and editing require reading existing relationship data, validating product rules, and then writing. Perform the authoritative validation and write through the same checked-out database client within a short transaction, as defined in `Database.md`.
+Cherry Kin creation and editing require reading existing relationship data, validating product rules, and then writing. Perform the authoritative validation and write through the same checked-out database client within a short transaction, as defined in `Database.md`.
 
 Do not wrap ordinary single-statement operations in unnecessary transactions.
 
@@ -286,7 +288,7 @@ Vercel preview deployments must not receive the production database connection s
 ## Error Handling
 
 Handle expected errors with simple user-facing messages.
-If a relationship cycle is detected after People data is read, log the error to the `logs` table and return a controlled internal error to the client.
+If a relationship cycle is detected after Cherry Kin data is read, log the error to the `logs` table and return a controlled internal error to the client.
 Do not create a custom error-handling framework.
 
 ## Logging and Monitoring

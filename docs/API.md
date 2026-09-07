@@ -171,7 +171,6 @@ All validation errors use `400 Bad Request`. A missing Cherry Kin uses `404 Not 
 
 For both endpoints, blank optional Death Day and Phone Number values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
 
-Legacy spouse, spouseBirthday, and spouseDeathday request properties are ignored. They never enter the editable values or SQL for these endpoints. Existing legacy columns are left untouched, including when other fields are edited.
 
 ## Spouse Administration
 

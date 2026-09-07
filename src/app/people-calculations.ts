@@ -9,11 +9,13 @@ interface GenealogyPerson extends PersonRelationship {
   birthday: string;
 }
 
-interface ListPerson extends GenealogyPerson {
+interface ListPerson {
+  birthday: string | null;
   firstName: string;
   lastName: string;
   deathday: string | null;
   spouse: string | null;
+  childCount: number | null;
 }
 
 interface SearchablePerson {
@@ -71,8 +73,7 @@ export function getGenealogyGenerations<T extends GenealogyPerson>(
   function getChildren(parentIds: ReadonlySet<number>): T[] {
     return people
       .filter(
-        (person) =>
-          person.parentId !== null && parentIds.has(person.parentId),
+        (person) => person.parentId !== null && parentIds.has(person.parentId),
       )
       .sort((firstPerson, secondPerson) => {
         if (firstPerson.parentId !== secondPerson.parentId) {
@@ -80,9 +81,8 @@ export function getGenealogyGenerations<T extends GenealogyPerson>(
             peopleById.get(firstPerson.parentId ?? 0)?.birthday ?? "";
           const secondParentBirthday =
             peopleById.get(secondPerson.parentId ?? 0)?.birthday ?? "";
-          const parentBirthdayOrder = firstParentBirthday.localeCompare(
-            secondParentBirthday,
-          );
+          const parentBirthdayOrder =
+            firstParentBirthday.localeCompare(secondParentBirthday);
 
           if (parentBirthdayOrder !== 0) {
             return parentBirthdayOrder;
@@ -112,13 +112,25 @@ export function getGenealogyGenerations<T extends GenealogyPerson>(
   };
 }
 
-function compareText(firstValue: string, secondValue: string): number {
+function compareText(
+  firstValue: string | null,
+  secondValue: string | null,
+): number {
+  const firstIsBlank = firstValue === null || firstValue.trim() === "";
+  const secondIsBlank = secondValue === null || secondValue.trim() === "";
+  if (firstIsBlank || secondIsBlank) {
+    return Number(firstIsBlank) - Number(secondIsBlank);
+  }
+
   return firstValue.localeCompare(secondValue, undefined, {
     sensitivity: "base",
   });
 }
 
-function getFullName(person: SearchablePerson): string {
+export function getFullName(person: {
+  firstName: string;
+  lastName: string;
+}): string {
   return `${person.firstName} ${person.lastName}`;
 }
 
@@ -160,38 +172,35 @@ export function sortPeople<T extends ListPerson>(
   people: readonly T[],
   sortOption: SortOption,
   today: string,
-  childCounts: ReadonlyMap<number, number>,
 ): T[] {
-  const sortablePeople = people.filter((person) => {
-    if (sortOption === "Death Day") {
-      return person.deathday !== null;
-    }
-
-    if (sortOption === "Spouse") {
-      return person.spouse !== null && person.spouse.trim() !== "";
-    }
-
-    return true;
-  });
+  // Death Day is the only sort that omits rows with missing data.
+  const sortablePeople =
+    sortOption === "Death Day"
+      ? people.filter((person) => person.deathday !== null)
+      : [...people];
 
   return sortablePeople.sort((firstPerson, secondPerson) => {
     let primaryOrder = 0;
 
     switch (sortOption) {
       case "Birthday":
-        primaryOrder = firstPerson.birthday.localeCompare(
-          secondPerson.birthday,
-        );
-        break;
       case "Upcoming Birthday":
+        // Missing dates stay below real dates; never parse null as a date.
+        if (firstPerson.birthday === null || secondPerson.birthday === null) {
+          return (
+            Number(firstPerson.birthday === null) -
+              Number(secondPerson.birthday === null) ||
+            compareFullNames(firstPerson, secondPerson)
+          );
+        }
         primaryOrder =
-          getDaysUntilNextBirthday(firstPerson.birthday, today) -
-          getDaysUntilNextBirthday(secondPerson.birthday, today);
+          sortOption === "Birthday"
+            ? firstPerson.birthday.localeCompare(secondPerson.birthday)
+            : getDaysUntilNextBirthday(firstPerson.birthday, today) -
+              getDaysUntilNextBirthday(secondPerson.birthday, today);
         break;
       case "Death Day":
-        primaryOrder = (firstPerson.deathday ?? "").localeCompare(
-          secondPerson.deathday ?? "",
-        );
+        primaryOrder = compareText(firstPerson.deathday, secondPerson.deathday);
         break;
       case "First Name":
         primaryOrder = compareText(
@@ -203,24 +212,18 @@ export function sortPeople<T extends ListPerson>(
           compareText(firstPerson.lastName, secondPerson.lastName)
         );
       case "Last Name":
-        primaryOrder = compareText(
-          firstPerson.lastName,
-          secondPerson.lastName,
-        );
+        primaryOrder = compareText(firstPerson.lastName, secondPerson.lastName);
         return (
           primaryOrder ||
           compareText(firstPerson.firstName, secondPerson.firstName)
         );
       case "Spouse":
-        primaryOrder = compareText(
-          firstPerson.spouse ?? "",
-          secondPerson.spouse ?? "",
-        );
+        primaryOrder = compareText(firstPerson.spouse, secondPerson.spouse);
         break;
       case "Children":
         primaryOrder =
-          (childCounts.get(secondPerson.id) ?? 0) -
-          (childCounts.get(firstPerson.id) ?? 0);
+          // Child counts are nonnegative; -1 explicitly puts missing counts last.
+          (secondPerson.childCount ?? -1) - (firstPerson.childCount ?? -1);
         break;
     }
 

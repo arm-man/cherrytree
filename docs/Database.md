@@ -31,32 +31,28 @@ The schema is intentionally small and uses ordinary PostgreSQL tables, constrain
 
 ### `people`
 
-Stores one row for each Cherry Kin. Public terminology remains Person during Phase 1.
+Stores one row for each Cherry Kin.
 
 | Column            | Type               | Null | Purpose                                                                                                            |
 | ----------------- | ------------------ | ---- | ------------------------------------------------------------------------------------------------------------------ |
 | `id`              | `integer` identity | No   | Primary key.                                                                                                       |
-| `parent_id`       | `integer`          | Yes  | The id of the Person's immediate parent. When NULL it is the single top-level Person that has no immediate parent. |
-| `first_name`      | `text`             | No   | The first name of the Person.                                                                                      |
-| `last_name`       | `text`             | No   | The last name of the Person.                                                                                       |
-| `birthday`        | `date`             | No   | The birth date of the Person.                                                                                      |
-| `deathday`        | `date`             | Yes  | The date of death of the Person.                                                                                   |
-| `spouse`          | `text`             | Yes  | The Person's spouse.                                                                                               |
+| `parent_id`       | `integer`          | Yes  | The id of the Cherry Kin's immediate parent. When NULL it is the single top-level Cherry Kin that has no immediate parent. |
+| `first_name`      | `text`             | No   | The first name of the Cherry Kin.                                                                                      |
+| `last_name`       | `text`             | No   | The last name of the Cherry Kin.                                                                                       |
+| `birthday`        | `date`             | No   | The birth date of the Cherry Kin.                                                                                      |
+| `deathday`        | `date`             | Yes  | The date of death of the Cherry Kin.                                                                                   |
 | `phone_number`    | `text`             | Yes  | Optional U.S. phone number, stored as 10 digits.                                                                   |
-| `spouse_birthday` | `date`             | Yes  | Optional spouse birth date.                                                                                        |
-| `spouse_deathday` | `date`             | Yes  | Optional spouse death date.                                                                                        |
-| `created_at`      | `timestamptz`      | No   | Person creation time. Use DEFAULT NOW().                                                                           |
+| `created_at`      | `timestamptz`      | No   | Cherry Kin creation time. Use DEFAULT NOW().                                                                           |
 
 Constraints:
 
 - Primary key on `id`.
-- `people_spouse_deathday_requires_birthday_check`: `spouse_deathday IS NULL OR spouse_birthday IS NOT NULL`.
-- Phone Number and the retained legacy spouse columns are nullable. Phone format validation belongs to the application, with no database format constraint. Phase 1 migration files are handled externally; application work must not modify database/ files.
+- Phone Number is nullable. Phone format validation belongs to the application, with no database format constraint.
 - parent_id is a self-referencing foreign key to people(id).
-- Use the default non-cascading foreign-key behavior so PostgreSQL prevents deleting a Person while another Person references that Person as a parent.
-- parent_id may be NULL only for the single top-level Person.
+- Use the default non-cascading foreign-key behavior so PostgreSQL prevents deleting a Cherry Kin while another Cherry Kin references that Cherry Kin as a parent.
+- parent_id may be NULL only for the single top-level Cherry Kin.
 
-After People data is read from the database, the server must test the parent relationships for cycles before deriving descendants or returning the data to the client. If a cycle is found, the server must write an error to the `logs` table and return a controlled internal error to the client. The server must also test that exactly one root (parent_id of NULL) exists.
+After Cherry Kin data is read from the database, the server must test the parent relationships for cycles before deriving descendants or returning the data to the client. If a cycle is found, the server must write an error to the `logs` table and return a controlled internal error to the client. The server must also test that exactly one root (parent_id of NULL) exists.
 
 ### `partners`
 
@@ -74,7 +70,7 @@ Stores one Spouse per row, separate from people.
 
 partners_partner_id_fkey references people(id) ON DELETE CASCADE. partners_deathday_requires_birthday_check requires deathday IS NULL OR birthday IS NOT NULL. There is no uniqueness constraint on partner_id. The admin application offers no deletion operations.
 
-The table already exists and migration files are managed externally. Phase 1 admin reads/writes partners and omits legacy spouse columns from all people queries and saves. Those columns remain for public behavior; no synchronization is performed. Later phases migrate public behavior and finally remove legacy columns.
+The table already exists and migration files are managed externally. Public spouse behavior reads `partners`; administrative spouse behavior reads and writes `partners`. Legacy spouse columns remain physically present on `people` until Phase 3, but are not read or synchronized by application spouse behavior. Phase 2 does not change database, migration or seed files.
 
 ### `logs`
 
@@ -92,22 +88,22 @@ The application must not store credentials, connection strings, or other secrets
 
 ### Age
 
-Age is derived, not stored. It uses birthday and deathday for deceased People, or birthday and today's date for living People. See `Product.md` for Age display and death details.
+Age is derived, not stored. It uses birthday and deathday for deceased Cherry Kin, or birthday and today's date for living Cherry Kin. See `Product.md` for Age display and death details.
 
 ### Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren
 
-A Person's progeny can be derived from the parent_id.
+A Cherry Kin's progeny can be derived from parent_id.
 
 ## Transactions
 
-Creating or editing a Person requires authoritative validation against existing People data followed by a write. Perform the validation and write through the same checked-out PostgreSQL client within a short transaction.
+Creating or editing a Cherry Kin requires authoritative validation against existing Cherry Kin data followed by a write. Perform the validation and write through the same checked-out PostgreSQL client within a short transaction.
 
 The transaction must:
 
-1. Read the existing People data needed to validate the submitted Person and parent relationship.
-2. For an edit, verify that the Person exists and that at least one editable value changed.
+1. Read the existing Cherry Kin data needed to validate the submitted Cherry Kin and parent relationship.
+2. For an edit, verify that the Cherry Kin exists and that at least one editable value changed.
 3. Validate the date, Parent, single-root, and cycle-prevention rules described below.
-4. Insert or update the Person using parameterized SQL.
+4. Insert or update the Cherry Kin using parameterized SQL.
 5. Commit only if all validation and the write succeed; otherwise roll back.
 
 No distributed locking or idempotency-key mechanism is required for the expected usage.
@@ -118,11 +114,11 @@ Spouse saves reuse the short admin transaction and people writer lock. Read Cher
 
 ## Indexes
 
-No additional indexes are required initially. The initial page load reads all People records, and sorting, searching, child counts, genealogy grouping, and cycle detection are performed after the read rather than by database queries. Add an index only if a later access pattern or measured performance problem justifies it.
+No additional indexes are required initially. The initial page load reads all Cherry Kin records, and sorting, searching, child counts, genealogy grouping, and cycle detection are performed after the read rather than by database queries. Add an index only if a later access pattern or measured performance problem justifies it.
 
 ## Deletion and Update Rules
 
-A Person cannot be deleted while another Person references that Person through parent_id.
+A Cherry Kin cannot be deleted while another Cherry Kin references that Cherry Kin through parent_id.
 
 Do not use cascading deletes for the people parent relationship. If a referenced parent must be deleted, the affected child relationships must first be deliberately updated or removed.
 
@@ -134,14 +130,14 @@ For administrative creation and editing:
 - Birthday is required and must not be in the future.
 - Death Day is nullable. When provided, it must not be before Birthday or in the future.
 - A blank Death Day is stored as null.
-- Phone Number is nullable; blank values become null. Normalize and validate phones using Product.md. Legacy spouse fields are not editable and are never written by admin.
-- id=1 must have parent_id of null. Every other Person must have a non-null parent_id that references an existing Person.
-- The proposed Parent must have been at least 15 years old on the Person's Birthday.
-- A Person cannot be their own Parent.
-- A Person's descendant cannot become that Person's Parent.
+- Phone Number is nullable; blank values become null. Normalize and validate phones using Product.md. 
+- id=1 must have parent_id of null. Every other Cherry Kin must have a non-null parent_id that references an existing Cherry Kin.
+- The proposed Parent must have been at least 15 years old on the Cherry Kin's Birthday.
+- A Cherry Kin cannot be their own Parent.
+- A Cherry Kin's descendant cannot become that Cherry Kin's Parent.
 - Every successful write must preserve exactly one root and an acyclic parent graph.
 - An edit that does not change any editable value must be rejected without issuing an update.
 
 ## Manual Database Smoke Tests
 
-Perform manual smoke tests against the development database. See `AdminPeopleSmokeTests.md` for the Phase 1 checklist. Assume the externally managed partners table already exists. Do not change migration or seed files as part of application verification.
+Perform manual smoke tests against the development database. See `AdminPeopleSmokeTests.md` for the checklist. Assume the externally managed partners table already exists. Do not change migration or seed files as part of application verification.

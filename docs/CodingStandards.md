@@ -58,8 +58,8 @@ Use names that describe the product concept or action. Prefer recognizable words
 
 | Item | Convention | Example |
 | --- | --- | --- |
-| Variables and functions | `camelCase` | `rootPersonId`, `sortPeople` |
-| React components and TypeScript types | `PascalCase` | `PersonTable` |
+| Variables and functions | `camelCase` | `rootCherryKinId`, `sortCherryKin` |
+| React components and TypeScript types | `PascalCase` | `CherryKinTable` |
 | Fixed configuration constants | `UPPER_SNAKE_CASE` | `MAX_ACTIVE_SESSIONS` |
 | React component files | `PascalCase.tsx` | `QuestionCard.tsx` |
 | Other TypeScript files | `kebab-case.ts` | `guess-evaluation.ts` |

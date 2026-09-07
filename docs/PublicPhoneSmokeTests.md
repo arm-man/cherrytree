@@ -12,4 +12,4 @@ Use development data with at least one Person whose phone number is set and one 
 - At narrow mobile widths, tap an icon and then Call. Verify the popup stays inside the viewport and escapes the table's clipping. Verify tapping outside dismisses it.
 - Switch to List View with a phone popup open. Verify no phone icons, phone text, or Copy/Call controls remain. Check sorting, filtering, and name navigation back to Genealogy.
 - Check living ages remain plain text and deceased Age popups still show death details on hover, focus, click, and tap, with their existing dismissal behavior.
-- Verify no spouse dates appear in the public UI or server-to-client payload.
+- Verify Spouse rows use their own dates from `partners` and never have phone icons. Legacy spouse fields from `people` must not appear in the server-to-client payload.

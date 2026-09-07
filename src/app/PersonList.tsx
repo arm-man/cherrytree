@@ -13,40 +13,38 @@ import {
 } from "./date-calculations";
 import {
   filterPeopleBySearch,
-  getChildCounts,
+  getFullName,
   getGenealogyGenerations,
   personMatchesSearch,
   SORT_OPTIONS,
   sortPeople,
 } from "./people-calculations";
 import type { SortOption } from "./people-calculations";
-
-interface PersonListItem {
-  id: number;
-  parentId: number | null;
-  firstName: string;
-  lastName: string;
-  birthday: string;
-  deathday: string | null;
-  spouse: string | null;
-  phoneNumber: string | null;
-}
+import { getListRows, getParentSection, getPublicRows } from "./public-display";
+import type {
+  CherryKinRow,
+  PublicPartner,
+  PublicPerson,
+  PublicRow,
+} from "./public-display";
 
 interface PersonListProps {
-  people: PersonListItem[];
+  people: PublicPerson[];
+  partners: PublicPartner[];
 }
 
 interface PersonTableProps {
   ariaLabel: string;
-  people: readonly PersonListItem[];
-  peopleById: ReadonlyMap<number, PersonListItem>;
+  people: readonly PublicRow[];
+  peopleById: ReadonlyMap<number, CherryKinRow>;
   showChildren?: boolean;
   showParent?: boolean;
   showPhone?: boolean;
+  indentPartners?: boolean;
   today: string | null;
-  isBirthdayHighlighted?: (person: PersonListItem) => boolean;
-  isRowHighlighted?: (person: PersonListItem) => boolean;
-  onPersonNameClick: (person: PersonListItem) => void;
+  isBirthdayHighlighted?: (person: PublicRow) => boolean;
+  isRowHighlighted?: (person: PublicRow) => boolean;
+  onPersonNameClick: (personId: number) => void;
 }
 
 type View = "genealogy" | "list";
@@ -71,10 +69,6 @@ function formatDate(date: string): string {
   const [year, month, day] = date.split("-").map(Number);
 
   return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
-}
-
-function getFullName(person: PersonListItem): string {
-  return `${person.firstName} ${person.lastName}`;
 }
 
 function getToday(): string {
@@ -118,14 +112,12 @@ function PersonTable({
   showChildren = false,
   showParent = false,
   showPhone = false,
+  indentPartners = false,
   today,
   isBirthdayHighlighted,
   isRowHighlighted,
   onPersonNameClick,
 }: PersonTableProps) {
-  const childCounts = showChildren
-    ? getChildCounts([...peopleById.values()])
-    : null;
   const columnCount = 4 + Number(showChildren) + Number(showParent);
 
   return (
@@ -151,7 +143,7 @@ function PersonTable({
           ) : (
             people.map((person) => {
               const parent =
-                person.parentId === null
+                person.type === "partner" || person.parentId === null
                   ? undefined
                   : peopleById.get(person.parentId);
 
@@ -160,17 +152,27 @@ function PersonTable({
                   className={
                     isRowHighlighted?.(person) ? "highlighted-row" : undefined
                   }
-                  key={person.id}
+                  key={person.rowKey}
                 >
-                  <td className="person-name">
+                  <td
+                    className={
+                      indentPartners && person.type === "partner"
+                        ? "person-name partner-name"
+                        : "person-name"
+                    }
+                  >
                     <button
                       type="button"
                       className="person-name-button"
-                      onClick={() => onPersonNameClick(person)}
+                      onClick={() =>
+                        onPersonNameClick(person.navigationPersonId)
+                      }
                     >
                       {getFullName(person)}
                     </button>
-                    {showPhone && person.phoneNumber !== null ? (
+                    {showPhone &&
+                    person.type === "cherryKin" &&
+                    person.phoneNumber !== null ? (
                       <PersonPhone
                         fullName={getFullName(person)}
                         phoneNumber={person.phoneNumber}
@@ -181,7 +183,7 @@ function PersonTable({
                     <td>{parent ? getFullName(parent) : ""}</td>
                   ) : null}
                   <td>
-                    {today ? (
+                    {today && person.birthday !== null ? (
                       person.deathday ? (
                         <DeceasedAge
                           birthday={person.birthday}
@@ -203,11 +205,11 @@ function PersonTable({
                         : undefined
                     }
                   >
-                    {formatDate(person.birthday)}
+                    {person.birthday === null
+                      ? ""
+                      : formatDate(person.birthday)}
                   </td>
-                  {showChildren ? (
-                    <td>{childCounts?.get(person.id) ?? 0}</td>
-                  ) : null}
+                  {showChildren ? <td>{person.childCount ?? ""}</td> : null}
                   <td>{person.spouse ?? ""}</td>
                 </tr>
               );
@@ -219,7 +221,11 @@ function PersonTable({
   );
 }
 
-export function PersonList({ people }: PersonListProps) {
+export function PersonList({
+  people: sourcePeople,
+  partners: sourcePartners,
+}: PersonListProps) {
+  const { people, partners } = getPublicRows(sourcePeople, sourcePartners);
   const [view, setView] = useState<View>("genealogy");
   const [rootPersonId, setRootPersonId] = useState(ROOT_PERSON_ID);
   const [listSort, setListSort] = useState<SortOption>("Birthday");
@@ -232,12 +238,15 @@ export function PersonList({ people }: PersonListProps) {
     getServerToday,
   );
   const peopleById = new Map(people.map((person) => [person.id, person]));
-  const childCounts = getChildCounts(people);
   const rootPerson = peopleById.get(rootPersonId);
+  const parentSection = getParentSection(rootPerson, partners);
   const generations = getGenealogyGenerations(people, rootPersonId);
-  const filteredPeople = filterPeopleBySearch(people, searchText);
+  const filteredPeople = filterPeopleBySearch(
+    getListRows(people, partners),
+    searchText,
+  );
   const listPeople = today
-    ? sortPeople(filteredPeople, listSort, today, childCounts)
+    ? sortPeople(filteredPeople, listSort, today)
     : filteredPeople;
 
   function reset(): void {
@@ -247,13 +256,14 @@ export function PersonList({ people }: PersonListProps) {
     setSearchText("");
   }
 
-  function showPersonAsParent(person: PersonListItem): void {
-    setRootPersonId(person.id);
+  function showPersonAsParent(personId: number): void {
+    setRootPersonId(personId);
     setView("genealogy");
   }
 
-  function handleParentNameClick(person: PersonListItem): void {
-    if (person.parentId !== null) {
+  function handleParentNameClick(personId: number): void {
+    const person = peopleById.get(personId);
+    if (person && person.parentId !== null) {
       setRootPersonId(person.parentId);
     }
   }
@@ -353,7 +363,9 @@ export function PersonList({ people }: PersonListProps) {
           today={today}
           isBirthdayHighlighted={
             listSort === "Upcoming Birthday" && today
-              ? (person) => isUpcomingBirthday(person.birthday, today)
+              ? (person) =>
+                  person.birthday !== null &&
+                  isUpcomingBirthday(person.birthday, today)
               : undefined
           }
           onPersonNameClick={showPersonAsParent}
@@ -361,11 +373,12 @@ export function PersonList({ people }: PersonListProps) {
       ) : (
         <div className="genealogy-view">
           <section className="generation">
-            <h2>Parent</h2>
+            <h2>{parentSection.title}</h2>
             <PersonTable
-              ariaLabel="Parent"
+              ariaLabel={parentSection.title}
               showPhone
-              people={rootPerson ? [rootPerson] : []}
+              indentPartners={parentSection.rows.length > 2}
+              people={parentSection.rows}
               peopleById={peopleById}
               today={today}
               isRowHighlighted={(person) =>

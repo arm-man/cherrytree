@@ -18,6 +18,7 @@ const people = [
     birthday: "1940-12-31",
     deathday: "2020-05-01",
     spouse: "Aaron Cherry",
+    childCount: 2,
   },
   {
     id: 2,
@@ -27,6 +28,7 @@ const people = [
     birthday: "1970-01-02",
     deathday: null,
     spouse: null,
+    childCount: 0,
   },
   {
     id: 3,
@@ -36,6 +38,7 @@ const people = [
     birthday: "1965-06-15",
     deathday: "2010-03-01",
     spouse: "Zed Able",
+    childCount: 0,
   },
 ];
 
@@ -100,18 +103,32 @@ test("matches and filters partial names or spouses without regard to case or pad
   );
 });
 
-test("sorts every List option and omits missing death days and spouses", () => {
-  const childCounts = getChildCounts(people);
+test("sorts every List option, omits null death days and keeps missing spouses last", () => {
   const idsFor = (sortOption: Parameters<typeof sortPeople>[1]) =>
-    sortPeople(people, sortOption, "2026-12-30", childCounts).map(
-      (person) => person.id,
-    );
+    sortPeople(people, sortOption, "2026-12-30").map((person) => person.id);
 
   assert.deepEqual(idsFor("Birthday"), [1, 3, 2]);
   assert.deepEqual(idsFor("Upcoming Birthday"), [1, 2, 3]);
   assert.deepEqual(idsFor("Death Day"), [3, 1]);
   assert.deepEqual(idsFor("First Name"), [3, 2, 1]);
   assert.deepEqual(idsFor("Last Name"), [3, 1, 2]);
-  assert.deepEqual(idsFor("Spouse"), [1, 3]);
+  assert.deepEqual(idsFor("Spouse"), [1, 3, 2]);
   assert.deepEqual(idsFor("Children"), [1, 3, 2]);
+});
+
+test("null, empty and whitespace-only Spouse values stay below populated names", () => {
+  const rows = [
+    { ...people[0], id: 4, spouse: "" },
+    { ...people[0], id: 5, spouse: "   " },
+    ...people,
+  ];
+  const sorted = sortPeople(rows, "Spouse", "2026-12-30");
+  assert.deepEqual(
+    sorted.slice(0, 2).map((row) => row.id),
+    [1, 3],
+  );
+  assert.deepEqual(
+    new Set(sorted.slice(2).map((row) => row.id)),
+    new Set([2, 4, 5]),
+  );
 });

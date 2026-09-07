@@ -8,23 +8,23 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 ## Terminology
 
 - **View**: one of Genealogy or List.
-- **Genealogy** : The View in which the Root Person, Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren are shown, each as their own table.
-- **Root Person** : The Person whose descendants are displayed in Genealogy View.
-- **List** : The View in which all People are shown in a table.
-- **People** : Each entry displays the following data: First Name, Last Name, Age, Birthday, Children, Spouse.
-- **Person** : The same as People but when used for a one People entry; the term Person is used simply because it is the singular of People in English.
+- **Genealogy** : The View in which the Root Cherry Kin, Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren are shown, each as their own table.
+- **Root Cherry Kin** : The Cherry Kin whose descendants are displayed in Genealogy View.
+- **List** : The View in which all Cherry Kin and all Spouses are shown in a table.
+- **Cherry Kin** : A member of the Cherry family genealogy. Cherry Kin form the genealogy hierarchy and may have descendants.
+- **Spouse** : A spouse or partner associated with a Cherry Kin. Spouses are family information but are not part of the genealogy hierarchy and do not affect Generations.
 - **Full Name** : The concatenation of the First Name with the Last Name.
-- **Generation** : One of Root Person, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
+- **Generation** : One of Root Cherry Kin, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
 - **Control** : The View, Sort, or Search controls.
-- **Reset** : Set the View to Genealogy, select id=1 as the Root Person, clear the Search box, set the displayed Sort to None (Blank), and reset the remembered List View Sort to Birthday.
+- **Reset** : Set the View to Genealogy, select id=1 as the Root Cherry Kin, clear the Search box, set the displayed Sort to None (Blank), and reset the remembered List View Sort to Birthday.
 
 ## Data
 
-- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day, Spouse, Phone Number, Spouse's Birthday, and Spouse's Death Day are optional and may be null/blank. Phone Number is available in public Genealogy View only; legacy spouse dates are retained during the migration but are no longer exposed or edited by admin pages.
+- Every Cherry Kin has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Cherry Kin and has no parent. Death Day and Phone Number are optional and may be null/blank. Spouse information is stored separately and associated with Cherry Kin.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
 - Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
-- Children is derived as the number of People whose parent is that Person and is not independently maintained.
+- Children is derived as the number of Cherry Kin whose parent is that Cherry Kin and is not independently maintained.
 
 ## Wordmark
 
@@ -37,7 +37,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - On mobile, View and Sort share the first row, with View sized to its buttons and Sort filling the remaining width. Search spans the full second row. Use compact panel padding and spacing while keeping controls touch-friendly.
 - The View control toggles between Genealogy and List.
   - Genealogy is the default.
-  - When Genealogy is selected, the page switches to Genealogy View and the Root Person that was last selected (remembered in React state during the current page lifetime) is restored. The Sort option is stored, then changed to None (Blank).
+  - When Genealogy is selected, the page switches to Genealogy View and the Root Cherry Kin that was last selected (remembered in React state during the current page lifetime) is restored. The Sort option is stored, then changed to None (Blank).
     - In Genealogy View, the Sort control displays a blank value because sorting does not apply to the overall Genealogy View. Note that Blank is not a selectable Sort option in the List View.
   - When List is selected, the page switches to List View and restores the most recently selected List View Sort. If no List View Sort has previously been selected, Birthday is used.
 - Sort options include: Birthday, Upcoming Birthday, Death Day, First Name, Last Name, Spouse, Children. Use the order presented here, not alphabetical.
@@ -54,58 +54,74 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 ## List View
 
 - No phone icon, phone number, or Copy/Call controls appear in List View.
-- The People are shown in a single table with columns: Name, Age, Birthed, Children, Spouse.
+- The Cherry Kin are shown in a single table with columns: Name, Age, Birthed, Children, Spouse.
   - Name is the Full Name.
-  - Birthed displays the Person's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
-- When the Sort option is Upcoming Birthday, ignore the year and sort each Person by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include People with a Death Day in the Upcoming Birthday list.
+  - Birthed displays the Cherry Kin's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
+- When the Sort option is Upcoming Birthday, ignore the year and sort each Cherry Kin by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include Cherry Kin with a Death Day in the Upcoming Birthday list.
 - When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
-- When the Sort option is Death Day, the order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
+- When the Sort option is Death Day, omit Cherry Kin and Spouse entries whose Death Day is NULL. The order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
 - When the Sort option is Spouse, sort alphabetically. Ignore the fact that the name may contain a first or last name, simply order the text data alphabetically.
 - When the Sort option is Children, sort descending.
-- When the Sort option is Death Day or Spouse, any entry without data is omitted.
+  - A sole Spouse uses the associated Cherry Kin's Children count, including 0, and sorts normally. Spouses in multiple-spouse relationships have blank Children, sorted after all numeric counts.
+- Except for Death Day, sorting never omits rows. Blank values in the selected sort field always appear after populated values, for both ascending sorts and the descending Children sort. Missing Birthdays are not highlighted by Upcoming Birthday.
 - When a sort has the same value, e.g. the same Children, the secondary sort is by Full Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
   - When the Sort option is First Name, sort alphabetically ascending by First Name. Secondary sort is by Last Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
   - When the Sort option is Last Name, sort alphabetically ascending by Last Name. Secondary sort is by First Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
-- Each Person's Name is clickable. When clicked, the View changes to Genealogy and the Person clicked becomes the Root Person. The Sort option is stored, then changed to None (Blank).
+- Each Cherry Kin's Name is clickable. When clicked, the View changes to Genealogy and the Cherry Kin clicked becomes the Root Cherry Kin. The Sort option is stored, then changed to None (Blank).
 - If Search produces no results, display "No people found."
+
+### Public Spouse Records
+
+- Public Spouse information comes exclusively from `partners`, associated through `partners.partner_id = people.id`. Each record is independent; duplicate names are allowed and are never matched or deduplicated by name.
+- Every Cherry Kin and every Spouse produces exactly one List row, including Spouses without Birthdays. With Search empty, the List row count equals the number of people rows plus the number of partners rows, except when sorted by Death Day, which includes only entries with a non-NULL Death Day.
+- Spouse rows use their own First Name, Last Name, Birthday and Death Day. Age, deceased indicators and death-detail popups use the same calculations and presentation as Cherry Kin. Missing Birthday leaves Age and Birthed blank.
+- A Spouse row's Spouse column shows the associated Cherry Kin Full Name. If its partner_id occurs exactly once in partners, its Children equals the associated Cherry Kin's child count, including 0. Otherwise Children is blank. Count all partner records regardless of Birthday or Search; this display rule does not add partners to genealogy or child-count calculations. Spouse rows never have telephone icons or inherit Cherry Kin phone numbers.
+- Clicking a Spouse name performs the same action as clicking its associated Cherry Kin in that section. The Spouse's own id is never a Cherry Kin navigation target.
+- A Cherry Kin's Spouse column shows all associated Spouse Full Names, separated by commas, including those without Birthdays.
+- Both row types use the existing List sorting and case-insensitive, trimmed partial search against Full Name OR Spouse only. Age and Birthed are not searched. There is no Age sort or sort-direction control. Blank Birthdays sort after real dates.
+- Phase 2 changes only public application behavior. Legacy spouse columns remain physically present in `people` until Phase 3, but the application does not read or synchronize them. Database, migration and seed files are unchanged.
 
 ## Genealogy View
 
 - Instead of a single table as used in List View, Genealogy View uses multiple tables, one table for each Generation.
-- The Root Person section contains exactly one Person: the Root Person.
-- When a Person has a non-null Phone Number, show a subtle telephone icon immediately after their Name as a separate, keyboard-accessible button labeled "Phone number for <Full Name>".
+- The Root Cherry Kin section contains exactly one Cherry Kin: the Root Cherry Kin.
+  - With no linked Spouses, its heading is `Parent` and only that Cherry Kin appears.
+  - With one linked Spouse, its heading is `Parents`; with two or more, it is `Parent & Spouses`.
+  - Show all linked Spouses immediately after the Cherry Kin using the existing table columns, even without Birthdays. A sole Spouse's name aligns with the Cherry Kin's name; with two or more Spouses, slightly indent every Spouse name. Spouse clicks use the Root Cherry Kin's parent-navigation behavior.
+  - Spouse rows appear only in this section, never in any descendant section or descendant count.
+- When a Cherry Kin has a non-null Phone Number, show a subtle telephone icon immediately after their Name as a separate, keyboard-accessible button labeled "Phone number for <Full Name>".
   - Hover, keyboard focus, click, or tap reveal a small popup using the same styling, positioning, and dismissal behavior as Age details. Moving focus or the pointer into the popup keeps its controls available.
   - Display the number as (703) 555-1212. On hover-capable, fine-pointer devices, follow it with Copy only. Copy writes the displayed number (without a tel: prefix) to the clipboard, briefly shows Copied on success, and reports Could not copy if clipboard access fails.
   - On touch-oriented or coarse-pointer devices, follow the number with Call only. Call is a tel: link using +1 followed by the stored 10 U.S. digits.
-  - Phone, Copy, and Call interactions do not activate Person navigation; the Name remains independently clickable.
-- Each Genealogy table displays the same Person data columns as List View except Children, which is omitted.
-- The number of children, grandchildren, etc. is listed in the Generation title, e.g. "Children (5)" if the Root Person has 5 children or "Grandchildren (18)" if the Root Person has 18 grandchildren.
+  - Phone, Copy, and Call interactions do not activate Cherry Kin navigation; the Name remains independently clickable.
+- Each Genealogy table displays the same Cherry Kin data columns as List View except Children, which is omitted.
+- The number of children, grandchildren, etc. is listed in the Generation title, e.g. "Children (5)" if the Root Cherry Kin has 5 children or "Grandchildren (18)" if the Root Cherry Kin has 18 grandchildren.
   - The numbers in parenthesis do not change based on the entries highlighted by the Search text box.
 - When Search is empty, no rows are highlighted based on Search.
-- If the Root Person has zero of a certain Generation, that Generation is omitted, with the exception of the Children Generation, in which case that section is shown but with the message "No Children".
-- Each Person's Name is clickable. When a descendant's Name is clicked, that Person becomes the Root Person.
-- When the current Root Person's Name is clicked, that Person's parent becomes the new Root Person. If the current Root Person has no parent, the Root Person does not change.
+- If the Root Cherry Kin has zero of a certain Generation, that Generation is omitted, with the exception of the Children Generation, in which case that section is shown but with the message "No Children".
+- Each Cherry Kin's Name is clickable. When a descendant's Name is clicked, that Cherry Kin becomes the Root Cherry Kin.
+- When the current Root Cherry Kin's Name is clicked, that Cherry Kin's parent becomes the new Root Cherry Kin. If the current Root Cherry Kin has no parent, the Root Cherry Kin does not change.
 - The Children table is sorted by Birthday, ascending (oldest first).
 - For Grandchildren, Great Grandchildren, and Great Great Grandchildren:
-  - Include an additional column called Parent, which displays the Person's immediate parent.
-  - These tables are sorted first by the immediate Parent's birthday, ascending (oldest first), then by the Person's Birthday, ascending (oldest first).
+  - Include an additional column called Parent, which displays the Cherry Kin's immediate parent.
+  - These tables are sorted first by the immediate Parent's birthday, ascending (oldest first), then by the Cherry Kin's Birthday, ascending (oldest first).
 
 ## User Experience
 
-- Root Person is always displayed as "Parent" in the UI. The user should never encounter the term Root within the website.
-  - Be aware that in the UI, there will be a Parent that is the Root Person and a Parent of a Grandchild. This is ok for the user experience.
-- Age displays completed whole years, comparing the full Birthday with today's local calendar date for living People or Death Day for deceased People.
-  - Living People's ages are plain, noninteractive text.
-  - Deceased People's ages show age at death followed by a dagger, e.g. "82 †", on a subtly underlined button. Its accessible label communicates the age, deceased status, and availability of death details; the dagger is not the only indication of death.
-  - Hover, keyboard focus, click, or tap reveal a small popup with "Died March 14, 2008" and "Would be 100 today", using that Person's Death Day and hypothetical completed age as of today. Activation keeps the popup open; activating again, pressing Escape, clicking/tapping outside, or moving focus away dismisses it. Hover previews remain available while the pointer is over the age or popup.
+- The Root Cherry Kin section uses "Parent", "Parents", or "Parent & Spouses" as defined above. The user should never encounter the term Root within the website.
+  - Be aware that in the UI, there will be a Parent that is the Root Cherry Kin and a Parent of a Grandchild. This is ok for the user experience.
+- Age displays completed whole years, comparing the full Birthday with today's local calendar date for living Cherry Kin or Death Day for deceased Cherry Kin.
+  - Living Cherry Kin ages are plain, noninteractive text.
+  - Deceased Cherry Kin ages show age at death followed by a dagger, e.g. "82 †", on a subtly underlined button. Its accessible label communicates the age, deceased status, and availability of death details; the dagger is not the only indication of death.
+  - Hover, keyboard focus, click, or tap reveal a small popup with "Died March 14, 2008" and "Would be 100 today", using that Cherry Kin's Death Day and hypothetical completed age as of today. Activation keeps the popup open; activating again, pressing Escape, clicking/tapping outside, or moving focus away dismisses it. Hover previews remain available while the pointer is over the age or popup.
   - Retain visible keyboard focus. Keep the popup within the viewport and outside table clipping, without adding horizontal scrolling; dismiss it when the viewport is resized or scrolled.
-- Neither View has a Death Day column. Keep Death Day in stored and internal Person data for age calculations, death details, and the existing Death Day sort.
+- Neither View has a Death Day column. Keep Death Day in stored and internal Cherry Kin data for age calculations, death details, and the existing Death Day sort.
 - Public dates use full English month names, e.g. March 14, 2008 or May 17, 1947, matching the existing Birthed display. Birthday and Death Day remain calendar dates without time-zone conversion.
 - Children to be shown as a number.
 - If there is no Spouse, that field remains blank.
-- During Phase 1, public Spouse rendering continues to use the legacy informational field on People and is not clickable. Public pages do not yet read partners. The admin model below uses separate Spouse records.
-- Generations contain only descendants of the Root Person; Spouses have no effect on Generations.
-- If the Person has no children, display 0.
+- Public Spouse information is read from the partners table and associated with Cherry Kin. Spouse names are informational and are not clickable.
+- Generations contain only descendants of the Root Cherry Kin; Spouses have no effect on Generations.
+- If the Cherry Kin has no children, display 0.
 - The color palette shall use the same colors as those found at http://roncherry.net/cherrytree/, i.e. #FDEBCF as the main background color and #F3979D as the secondary/highlight color. Other colors, particularly black and white, are allowed, the guidance here is on the two main colors for the palette.
 - Edge cases related to February 29 (leap year) can be ignored for now as there is no date data for February 29.
 
@@ -148,7 +164,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - Cancel/Return returns to the Admin Cherry Kin & Spouses List without saving the current form.
 - The initial administration feature does not provide a way to delete a Cherry Kin.
 
-### Spouse forms and Phase 1 boundaries
+### Spouse Forms
 
 - Add Spouse links to /admin/partners/new. A Spouse list row opens /admin/partners/[id]/edit for its own partners.id; its heading is Edit Spouse.
 - Add/Edit Spouse fields are First Name, Last Name, Birthday, Death Day, Spouse, in that order. Names and Spouse are required. Both dates are optional and blank dates become null.
@@ -156,7 +172,6 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Birthday cannot be future. Death Day requires Birthday, must be on or after it, and cannot be future. Equal dates are allowed. Validate on client and server with clear errors.
 - Use the Cherry Kin form layout and error/pending conventions, one Save button, and Cancel/Return. Successful creation clears the form, stays on Add Spouse, refreshes options, and identifies the Spouse added. Successful editing returns to the list. Unchanged edits display "No changes were made." Cancel/Return leaves without saving.
 - Neither entity supports deletion in the UI or API.
-- Phase 1 changes admin only: admin does not read or write people.spouse, people.spouse_birthday, or people.spouse_deathday. Public behavior continues using legacy fields, without synchronization. Phase 2 will convert public pages; Phase 3 will remove legacy columns after public verification. Database migrations are handled externally.
 
 ## Mobile Requirements
 
