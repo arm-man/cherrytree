@@ -15,5 +15,5 @@ Run against development data after applying `003_migration_people_phone_spouse_d
 - Confirm abbreviated admin dates, including Parent options (e.g. `Dec 14, 1975`, `Mar 2, 2008`), and blank missing values.
 - Verify edit values populate, unchanged Save shows `No changes were made.`, and successful edit returns to the filtered list.
 - Verify successful Add remains on the cleared form with confirmation, and Cancel/Return preserves list search.
-- Verify public List and Genealogy views retain their columns, full month names, and original payload; no phone or spouse-date fields appear.
+- Verify public List and Genealogy views retain their columns and full month names. Phone controls appear only beside names in Genealogy View; no spouse-date fields appear in either public view or its payload. See PublicPhoneSmokeTests.md.
 - Apply the migration to a populated copy of the current schema. Confirm existing records are unchanged and all three new columns are nullable with NULL defaults. Confirm the named check rejects spouse death without spouse birth and permits equal dates.

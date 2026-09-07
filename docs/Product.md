@@ -20,7 +20,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 ## Data
 
-- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day, Spouse, Phone Number, Spouse's Birthday, and Spouse's Death Day are optional and may be null/blank. Phone Number and spouse dates are administrative data only and are not shown on public pages.
+- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day, Spouse, Phone Number, Spouse's Birthday, and Spouse's Death Day are optional and may be null/blank. Phone Number is available in public Genealogy View only; spouse dates remain administrative data only.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
 - Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
@@ -50,9 +50,10 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
     - Search is case-insensitive and performs a partial-text match. Leading and trailing whitespace in the Search text is ignored.
   - In Genealogy View, the entire row is highlighted on a match.
   - In List View, the data is filtered such that only matches are shown.
-  
+
 ## List View
 
+- No phone icon, phone number, or Copy/Call controls appear in List View.
 - The People are shown in a single table with columns: Name, Age, Birthed, Children, Spouse.
   - Name is the Full Name.
   - Birthed displays the Person's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
@@ -72,6 +73,11 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 - Instead of a single table as used in List View, Genealogy View uses multiple tables, one table for each Generation.
 - The Root Person section contains exactly one Person: the Root Person.
+- When a Person has a non-null Phone Number, show a subtle telephone icon immediately after their Name as a separate, keyboard-accessible button labeled "Phone number for <Full Name>".
+  - Hover, keyboard focus, click, or tap reveal a small popup using the same styling, positioning, and dismissal behavior as Age details. Moving focus or the pointer into the popup keeps its controls available.
+  - Display the number as (703) 555-1212. On hover-capable, fine-pointer devices, follow it with Copy only. Copy writes the displayed number (without a tel: prefix) to the clipboard, briefly shows Copied on success, and reports Could not copy if clipboard access fails.
+  - On touch-oriented or coarse-pointer devices, follow the number with Call only. Call is a tel: link using +1 followed by the stored 10 U.S. digits.
+  - Phone, Copy, and Call interactions do not activate Person navigation; the Name remains independently clickable.
 - Each Genealogy table displays the same Person data columns as List View except Children, which is omitted.
 - The number of children, grandchildren, etc. is listed in the Generation title, e.g. "Children (5)" if the Root Person has 5 children or "Grandchildren (18)" if the Root Person has 18 grandchildren.
   - The numbers in parenthesis do not change based on the entries highlighted by the Search text box.

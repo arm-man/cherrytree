@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useSyncExternalStore } from "react";
 import { DeceasedAge } from "./DeceasedAge";
+import { PersonPhone } from "./PersonPhone";
 
 import birthcake from "../../public/birthcake.jpg";
 import {
@@ -28,6 +29,7 @@ interface PersonListItem {
   birthday: string;
   deathday: string | null;
   spouse: string | null;
+  phoneNumber: string | null;
 }
 
 interface PersonListProps {
@@ -40,6 +42,7 @@ interface PersonTableProps {
   peopleById: ReadonlyMap<number, PersonListItem>;
   showChildren?: boolean;
   showParent?: boolean;
+  showPhone?: boolean;
   today: string | null;
   isBirthdayHighlighted?: (person: PersonListItem) => boolean;
   isRowHighlighted?: (person: PersonListItem) => boolean;
@@ -114,6 +117,7 @@ function PersonTable({
   peopleById,
   showChildren = false,
   showParent = false,
+  showPhone = false,
   today,
   isBirthdayHighlighted,
   isRowHighlighted,
@@ -166,6 +170,12 @@ function PersonTable({
                     >
                       {getFullName(person)}
                     </button>
+                    {showPhone && person.phoneNumber !== null ? (
+                      <PersonPhone
+                        fullName={getFullName(person)}
+                        phoneNumber={person.phoneNumber}
+                      />
+                    ) : null}
                   </td>
                   {showParent ? (
                     <td>{parent ? getFullName(parent) : ""}</td>
@@ -354,6 +364,7 @@ export function PersonList({ people }: PersonListProps) {
             <h2>Parent</h2>
             <PersonTable
               ariaLabel="Parent"
+              showPhone
               people={rootPerson ? [rootPerson] : []}
               peopleById={peopleById}
               today={today}
@@ -371,6 +382,7 @@ export function PersonList({ people }: PersonListProps) {
             ) : (
               <PersonTable
                 ariaLabel="Children"
+                showPhone
                 people={generations.children}
                 peopleById={peopleById}
                 today={today}
@@ -387,6 +399,7 @@ export function PersonList({ people }: PersonListProps) {
               <h2>Grandchildren ({generations.grandchildren.length})</h2>
               <PersonTable
                 ariaLabel="Grandchildren"
+                showPhone
                 people={generations.grandchildren}
                 peopleById={peopleById}
                 showParent
@@ -406,6 +419,7 @@ export function PersonList({ people }: PersonListProps) {
               </h2>
               <PersonTable
                 ariaLabel="Great Grandchildren"
+                showPhone
                 people={generations.greatGrandchildren}
                 peopleById={peopleById}
                 showParent
@@ -426,6 +440,7 @@ export function PersonList({ people }: PersonListProps) {
               </h2>
               <PersonTable
                 ariaLabel="Great Great Grandchildren"
+                showPhone
                 people={generations.greatGreatGrandchildren}
                 peopleById={peopleById}
                 showParent

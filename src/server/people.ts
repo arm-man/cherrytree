@@ -12,6 +12,7 @@ export interface Person {
   birthday: string;
   deathday: string | null;
   spouse: string | null;
+  phoneNumber: string | null;
 }
 
 type PersonRow = QueryResultRow & Person;
@@ -58,7 +59,8 @@ export async function getPeople(client?: PoolClient): Promise<Person[]> {
        last_name AS "lastName",
        TO_CHAR(birthday, 'YYYY-MM-DD') AS birthday,
        TO_CHAR(deathday, 'YYYY-MM-DD') AS deathday,
-       spouse
+       spouse,
+       phone_number AS "phoneNumber"
      FROM people
      ORDER BY id`,
   );

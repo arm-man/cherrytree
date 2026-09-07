@@ -121,7 +121,7 @@ Use a consistent minimal JSON error shape across endpoints.
 Do not use Server Actions for Cherry Tree mutations unless this architecture decision is deliberately revisited.
 Server Components may retrieve data directly through server-side database modules. They do not need to call the application's own HTTP endpoints for reads.
 
-For public pages, the server passes People data to the interactive Client Component using a small application data shape containing only the fields needed by the browser: id, parentId, firstName, lastName, birthday, deathday, and spouse. birthday and deathday are passed as ISO date-only strings in YYYY-MM-DD format. They must remain calendar dates and must not undergo time-zone conversion.
+For public pages, the server passes People data to the interactive Client Component using a small application data shape containing only the fields needed by the browser: id, parentId, firstName, lastName, birthday, deathday, spouse, and nullable phoneNumber for Genealogy phone details. List View does not render phone information. birthday and deathday are passed as ISO date-only strings in YYYY-MM-DD format. They must remain calendar dates and must not undergo time-zone conversion.
 
 After People data is read from PostgreSQL, the server must test the parent relationships for cycles before deriving genealogy data or returning the data to the client. If a cycle is found, the server must log an error to the `logs` table and return a controlled internal error to the client. If database logging fails, the original cycle error must still be returned and the logging failure must be written to the server console.
 
@@ -209,7 +209,7 @@ Use these pages:
 
 Use Server Components to load People data for the administrative pages. Use focused Client Components for immediate list filtering, form state, client-side validation, pending-button behavior, and ordinary HTTP calls to mutation Route Handlers.
 
-Administrative reads use an extended Person shape with nullable phoneNumber, spouseBirthday, and spouseDeathday. Spouse dates are ISO date-only strings. Keep the public query and payload unchanged. Shared pure validation and phone helpers support both the form and the server save operation.
+Administrative reads extend the public Person shape with nullable spouseBirthday and spouseDeathday. Spouse dates are ISO date-only strings and remain excluded from the public query and payload. Shared pure validation and phone helpers support the form, server save operation, and public phone formatting.
 
 The Admin People List search value should be stored in the URL query string so it can be preserved when returning from an Add Person or Edit Person page.
 
