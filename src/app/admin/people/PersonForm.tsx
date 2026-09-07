@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import { getLocalDateOnly } from "@/app/date-calculations";
-import type { Person } from "@/server/people";
 import type { AdminPerson } from "@/server/admin-people-db";
 import { formatPhoneNumber } from "./phone-number";
+import type { AdminRowFilter } from "./admin-display";
 import { adminPeopleUrl } from "./admin-display";
 import { ParentSelect } from "./ParentSelect";
 import {
@@ -16,7 +16,6 @@ import {
   PersonValidationError,
   validatePerson,
   validatePhoneNumber,
-  validateSpouseDates,
 } from "./person-validation";
 import type { PersonValues } from "./person-validation";
 import styles from "./admin.module.css";
@@ -26,10 +25,7 @@ const emptyValues: PersonValues = {
   lastName: "",
   birthday: "",
   deathday: "",
-  spouse: "",
   phoneNumber: "",
-  spouseBirthday: "",
-  spouseDeathday: "",
   parentId: null,
 };
 const fields = [
@@ -39,19 +35,6 @@ const fields = [
   { name: "deathday", label: "Death Day", type: "date", required: false },
   { name: "parentId", label: "Parent", type: "parent", required: true },
   { name: "phoneNumber", label: "Phone Number", type: "tel", required: false },
-  { name: "spouse", label: "Spouse", type: "text", required: false },
-  {
-    name: "spouseBirthday",
-    label: "Spouse's Birthday",
-    type: "date",
-    required: false,
-  },
-  {
-    name: "spouseDeathday",
-    label: "Spouse's Death Day",
-    type: "date",
-    required: false,
-  },
 ] as const;
 
 function getToday(): string {
@@ -73,10 +56,12 @@ export function PersonForm({
   people,
   person,
   search,
+  type,
 }: {
-  people: Person[];
+  people: AdminPerson[];
   person?: AdminPerson;
   search: string;
+  type: AdminRowFilter;
 }) {
   const router = useRouter();
   const [values, setValues] = useState<PersonValues>(
@@ -86,10 +71,7 @@ export function PersonForm({
           lastName: person.lastName,
           birthday: person.birthday,
           deathday: person.deathday ?? "",
-          spouse: person.spouse ?? "",
           phoneNumber: formatPhoneNumber(person.phoneNumber),
-          spouseBirthday: person.spouseBirthday ?? "",
-          spouseDeathday: person.spouseDeathday ?? "",
           parentId: person.parentId,
         }
       : emptyValues,
@@ -118,7 +100,7 @@ export function PersonForm({
     person?.id === 1
       ? undefined
       : people.find((candidate) => candidate.id === values.parentId);
-  const returnUrl = adminPeopleUrl("/admin/people", search);
+  const returnUrl = adminPeopleUrl("/admin/people", search, type);
 
   function change(
     field: keyof PersonValues,
@@ -140,17 +122,6 @@ export function PersonForm({
           ...current,
           phoneNumber: formatPhoneNumber(phoneNumber),
         }));
-      } else if (field === "spouseBirthday" || field === "spouseDeathday") {
-        validateSpouseDates(
-          values.spouseBirthday,
-          values.spouseDeathday,
-          getToday(),
-        );
-        setErrors((current) => ({
-          ...current,
-          spouseBirthday: undefined,
-          spouseDeathday: undefined,
-        }));
       } else {
         validatePerson(values, people, getToday(), person?.id);
       }
@@ -158,9 +129,7 @@ export function PersonForm({
       if (
         error instanceof PersonValidationError &&
         error.field &&
-        (error.field === field ||
-          field === "spouseBirthday" ||
-          field === "spouseDeathday")
+        error.field === field
       ) {
         const errorField = error.field;
         setErrors((current) => ({ ...current, [errorField]: error.message }));
@@ -223,7 +192,7 @@ export function PersonForm({
         setValues(emptyValues);
         setResetCount((count) => count + 1);
         setMessage(
-          `${getFullName(normalized)} was added. You may enter another Person.`,
+          `${getFullName(normalized)} was added. You may enter another Cherry Kin.`,
         );
         router.refresh();
       }
@@ -270,7 +239,7 @@ export function PersonForm({
               />
               <p id="parent-help" className={styles.help}>
                 {person?.id === 1
-                  ? "This Person has no Parent."
+                  ? "This Cherry Kin has no Parent."
                   : parentDisabled
                     ? "Enter a valid Birthday to choose a Parent."
                     : "Select a Parent who was at least 15 years old on Birthday."}
@@ -290,11 +259,6 @@ export function PersonForm({
                 )}
               </label>
               <input
-                className={
-                  field.name.startsWith("spouse")
-                    ? styles.spouseInput
-                    : undefined
-                }
                 id={field.name}
                 name={field.name}
                 type={field.type}
@@ -303,11 +267,7 @@ export function PersonForm({
                 min={
                   field.name === "deathday" && isValidDateOnly(values.birthday)
                     ? values.birthday
-                    : field.name === "spouseDeathday" &&
-                        values.spouseBirthday &&
-                        isValidDateOnly(values.spouseBirthday)
-                      ? values.spouseBirthday
-                      : undefined
+                    : undefined
                 }
                 value={values[field.name] ?? ""}
                 onChange={(event) => change(field.name, event.target.value)}

@@ -9,7 +9,7 @@ export async function PUT(
   const { personId } = await params;
   if (!/^[1-9]\d*$/.test(personId) || Number(personId) > 2147483647) {
     return Response.json(
-      { error: { code: "PERSON_NOT_FOUND", message: "Person not found." } },
+      { error: { code: "PERSON_NOT_FOUND", message: "Cherry Kin not found." } },
       { status: 404 },
     );
   }

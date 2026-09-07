@@ -17,7 +17,9 @@ export interface Person {
 
 type PersonRow = QueryResultRow & Person;
 
-export function validateParentRelationships(people: Person[]): void {
+export function validateParentRelationships(
+  people: Pick<Person, "id" | "parentId">[],
+): void {
   const peopleById = new Map(people.map((person) => [person.id, person]));
   const rootCount = people.filter((person) => person.parentId === null).length;
 
@@ -33,7 +35,7 @@ export function validateParentRelationships(people: Person[]): void {
   // and detects cycles before relationship data is sent to the browser.
   for (const person of people) {
     const visitedIds = new Set<number>();
-    let currentPerson: Person | undefined = person;
+    let currentPerson: Pick<Person, "id" | "parentId"> | undefined = person;
 
     while (currentPerson.parentId !== null) {
       if (visitedIds.has(currentPerson.id)) {

@@ -1,9 +1,9 @@
 import { connection } from "next/server";
-import { getAdminPeople } from "@/server/admin-people";
+import { getAdminList } from "@/server/admin-list";
 import { AdminPeopleList } from "./AdminPeopleList";
 
 export default async function AdminPeoplePage() {
   await connection();
-  const people = await getAdminPeople();
-  return <AdminPeopleList people={people} />;
+  const rows = await getAdminList();
+  return <AdminPeopleList rows={rows} />;
 }

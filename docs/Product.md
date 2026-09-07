@@ -20,7 +20,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 ## Data
 
-- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day, Spouse, Phone Number, Spouse's Birthday, and Spouse's Death Day are optional and may be null/blank. Phone Number is available in public Genealogy View only; spouse dates remain administrative data only.
+- Every Person has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Person and has no parent. Death Day, Spouse, Phone Number, Spouse's Birthday, and Spouse's Death Day are optional and may be null/blank. Phone Number is available in public Genealogy View only; legacy spouse dates are retained during the migration but are no longer exposed or edited by admin pages.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
 - Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
@@ -103,7 +103,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Public dates use full English month names, e.g. March 14, 2008 or May 17, 1947, matching the existing Birthed display. Birthday and Death Day remain calendar dates without time-zone conversion.
 - Children to be shown as a number.
 - If there is no Spouse, that field remains blank.
-- The Spouse is not a Person in the database and is not clickable. A Spouse is simply an informational field that accompanies a Person. A Person may have one Spouse or no Spouse; cases of remarrying are not considered.
+- During Phase 1, public Spouse rendering continues to use the legacy informational field on People and is not clickable. Public pages do not yet read partners. The admin model below uses separate Spouse records.
 - Generations contain only descendants of the Root Person; Spouses have no effect on Generations.
 - If the Person has no children, display 0.
 - The color palette shall use the same colors as those found at http://roncherry.net/cherrytree/, i.e. #FDEBCF as the main background color and #F3979D as the secondary/highlight color. Other colors, particularly black and white, are allowed, the guidance here is on the two main colors for the palette.
@@ -113,39 +113,50 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 - Admin pages use #E8F1F5 as the main background color and #5B8FA8 as the secondary/highlight color to distinguish them from regular pages.
 - The initial administration feature is part of the same Cherry Tree application and is available without authentication. Administrator authentication may be added later.
-- The Admin People List is available at `/admin/people`.
-  - Load all People and sort them alphabetically by Full Name.
-  - Each Person is a clickable entry with columns in exactly this order: Full Name, Birthday, Death Day, Parent's Full Name, Phone Number, Spouse (Sp), Sp Birthday, Sp Death Day.
+- The Cherry Kin & Spouses list is available at `/admin/people`.
+  - Load Cherry Kin from people and Spouses from partners, combined and sorted alphabetically by Full Name.
+  - Each entry is clickable with columns in exactly this order: Full Name, Birthday, Death Day, Parent's Full Name, Phone Number, Spouse.
+  - Cherry Kin rows retain their name, dates, Parent and Phone Number, with blank Spouse. Spouse rows display their own name and optional dates, blank Parent and Phone Number, and the associated Cherry Kin Full Name in Spouse.
+  - Both row types use the same table and row colors.
   - Use compact table text and cell spacing, with more available width on large screens, to minimize horizontal scrolling. Use slightly larger text with dense rows and minimal vertical gaps to show more names at once. Long names and column headings may wrap; dates and phone numbers stay on one line. Keep every value fully accessible, name links at least 24 pixels tall, and horizontal scrolling where needed.
-  - All null optional values remain blank. The single top-level Person's Parent remains blank. Admin date displays, including Parent options, use abbreviated English months, e.g. Dec 14, 1975; public date formatting is unchanged.
-  - A Search text box filters the list immediately using a case-insensitive partial-text match against Full Name or Spouse. Leading and trailing whitespace in the Search text is ignored.
-  - If Search produces no results, display "No people found."
-  - Preserve the Search text when returning from an Add Person or Edit Person page.
-  - An Add Person button navigates to `/admin/people/new`.
-  - Clicking a Person navigates to `/admin/people/[id]/edit` for that Person.
-- The Add Person and Edit Person forms contain fields in exactly this order: First Name, Last Name, Birthday, Death Day, Parent, Phone Number, Spouse, Spouse's Birthday, Spouse's Death Day.
-  - First Name, Last Name, Birthday, and Parent are required, except that id=1 is the single top-level Person and has no Parent.
-  - Death Day, Phone Number, Spouse, Spouse's Birthday, and Spouse's Death Day are optional. Blank optional values are stored as null and existing values can be cleared.
+  - All null optional values remain blank. The single top-level Cherry Kin's Parent remains blank. Admin date displays, including Parent options, use abbreviated English months, e.g. Dec 14, 1975; public date formatting is unchanged.
+  - A Search text box filters the list immediately using a case-insensitive partial-text match against all six displayed fields, including formatted dates and phone numbers. Hidden legacy fields are never searched.
+  - A Type dropdown next to Search offers All (default), Cherry Kin, and Spouses. Search and Type combine with AND logic. Leading and trailing whitespace in the Search text is ignored.
+  - If Search produces no results, display "No Cherry Kin or Spouses found."
+  - Preserve Search and Type when returning from any Add or Edit form.
+  - An Add Cherry Kin button navigates to `/admin/people/new`.
+  - Clicking a Cherry Kin navigates to `/admin/people/[id]/edit` for that Cherry Kin.
+- The Add Cherry Kin and Edit Cherry Kin forms contain fields in exactly this order: First Name, Last Name, Birthday, Death Day, Parent, Phone Number.
+  - First Name, Last Name, Birthday, and Parent are required, except that id=1 is the single top-level Cherry Kin and has no Parent.
+  - Death Day and Phone Number are optional. Blank optional values are stored as null and existing values can be cleared.
   - Birthday must not be in the future. Death Day, when provided, must not be before Birthday or in the future.
-  - Spouse's Birthday must not be in the future. Spouse's Death Day requires Spouse's Birthday and must be on or after it and not in the future. Equal birth/death dates are allowed for both the Person and Spouse. Spouse dates do not require a Spouse name.
   - Phone Number accepts exactly 10 U.S. digits after removing spaces, parentheses, hyphens, and periods. Reject other characters, country codes, and extensions; do not validate area codes or exchanges. Store digits only; display as (703) 555-1234 in the list and edit form. Validate on both client and server.
-  - The Parent control is a searchable dropdown sorted alphabetically by Full Name. Each option displays the Person's Full Name and Birthday.
-  - The Spouse, Spouse's Birthday, and Spouse's Death Day inputs use a subtle contrasting background tint.
-  - Parent appears immediately after Death Day and before Phone Number in the form. On the Add Person page, Parent remains disabled until a valid Birthday is entered.
-  - A Person is eligible to be selected as Parent only if the proposed Parent was at least 15 years old when the Person was born.
-  - On the Edit Person page, the Person being edited and all of that Person's descendants are excluded from the Parent options.
-  - When editing id=1, Parent displays no value and is disabled. No other Person may have a null Parent.
+  - The Parent control is a searchable dropdown sorted alphabetically by Full Name. Each option displays the Cherry Kin's Full Name and Birthday.
+  - Parent appears immediately after Death Day and before Phone Number in the form. On the Add Cherry Kin page, Parent remains disabled until a valid Birthday is entered.
+  - A Cherry Kin is eligible to be selected as Parent only if the proposed Parent was at least 15 years old when the Cherry Kin was born.
+  - On the Edit Cherry Kin page, the Cherry Kin being edited and all of that Cherry Kin's descendants are excluded from the Parent options.
+  - When editing id=1, Parent displays no value and is disabled. No other Cherry Kin may have a null Parent.
   - Client-side validation provides immediate feedback, but the server validates all fields and relationship rules before saving.
   - While a save request is pending, disable the form's action buttons to prevent duplicate submissions.
   - If validation fails, remain on the form, preserve the entered values, and show field-specific or form-level errors.
-- The Edit Person page contains Save and Cancel buttons.
-  - Cancel returns to the Admin People List without saving.
-  - If Save succeeds, return to the Admin People List.
-  - If Save is selected when no editable values have changed, remain on the Edit Person page and display "No changes were made."
-- The Add Person page contains Save and Cancel/Return buttons.
-  - If Save succeeds, remain on the Add Person page, clear the form, and display a confirmation that identifies the Person added and indicates that another Person may be entered.
-  - Cancel/Return returns to the Admin People List without saving the current form.
-- The initial administration feature does not provide a way to delete a Person.
+- The Edit Cherry Kin page contains Save and Cancel buttons.
+  - Cancel returns to the Admin Cherry Kin & Spouses List without saving.
+  - If Save succeeds, return to the Admin Cherry Kin & Spouses List.
+  - If Save is selected when no editable values have changed, remain on the Edit Cherry Kin page and display "No changes were made."
+- The Add Cherry Kin page contains Save and Cancel/Return buttons.
+  - If Save succeeds, remain on the Add Cherry Kin page, clear the form, and display a confirmation that identifies the Cherry Kin added and indicates that another Cherry Kin may be entered.
+  - Cancel/Return returns to the Admin Cherry Kin & Spouses List without saving the current form.
+- The initial administration feature does not provide a way to delete a Cherry Kin.
+
+### Spouse forms and Phase 1 boundaries
+
+- Add Spouse links to /admin/partners/new. A Spouse list row opens /admin/partners/[id]/edit for its own partners.id; its heading is Edit Spouse.
+- Add/Edit Spouse fields are First Name, Last Name, Birthday, Death Day, Spouse, in that order. Names and Spouse are required. Both dates are optional and blank dates become null.
+- Spouse is a dropdown of Cherry Kin from people only whose Age is at least 16, alphabetized by Full Name. Age uses today's local calendar date for living Cherry Kin and Death Day for deceased Cherry Kin, including the sixteenth birthday. Each option displays Full Name and Birthday using the same abbreviated date format as the Parent dropdown, e.g. Candee Arant — Dec 14, 1975. It stores people.id in partners.partner_id. Edit selects the current association when eligible and permits changing it; if the existing association is under 16, select an eligible Cherry Kin before saving.
+- Birthday cannot be future. Death Day requires Birthday, must be on or after it, and cannot be future. Equal dates are allowed. Validate on client and server with clear errors.
+- Use the Cherry Kin form layout and error/pending conventions, one Save button, and Cancel/Return. Successful creation clears the form, stays on Add Spouse, refreshes options, and identifies the Spouse added. Successful editing returns to the list. Unchanged edits display "No changes were made." Cancel/Return leaves without saving.
+- Neither entity supports deletion in the UI or API.
+- Phase 1 changes admin only: admin does not read or write people.spouse, people.spouse_birthday, or people.spouse_deathday. Public behavior continues using legacy fields, without synchronization. Phase 2 will convert public pages; Phase 3 will remove legacy columns after public verification. Database migrations are handled externally.
 
 ## Mobile Requirements
 

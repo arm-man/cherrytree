@@ -19,24 +19,20 @@ import {
 import { logServerError } from "./db";
 import { validateParentRelationships } from "./people";
 import type { AdminPerson } from "./admin-people-db";
-import type { Person } from "./people";
 
 const PERSON_COLUMNS: [keyof PersonValues, string][] = [
   ["firstName", "first_name"],
   ["lastName", "last_name"],
   ["birthday", "birthday"],
   ["deathday", "deathday"],
-  ["spouse", "spouse"],
   ["phoneNumber", "phone_number"],
-  ["spouseBirthday", "spouse_birthday"],
-  ["spouseDeathday", "spouse_deathday"],
   ["parentId", "parent"],
 ];
 
 function formatPersonLogValue(
   person: PersonValues,
   field: keyof PersonValues,
-  people: readonly Person[],
+  people: readonly AdminPerson[],
 ): string {
   if (field === "parentId" && person.parentId !== null) {
     const parent = people.find((candidate) => candidate.id === person.parentId);
@@ -92,7 +88,10 @@ export async function savePerson(
     const people = await readAdminPeople(client);
     const stored = people.find((person) => person.id === personId);
     if (personId !== undefined && !stored) {
-      throw new PersonValidationError("PERSON_NOT_FOUND", "Person not found.");
+      throw new PersonValidationError(
+        "PERSON_NOT_FOUND",
+        "Cherry Kin not found.",
+      );
     }
     const values = validatePerson(
       input,

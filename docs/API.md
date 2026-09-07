@@ -20,7 +20,7 @@ Cherry Tree is a single Next.js application. The endpoints in this document are 
 
 ## Scope
 
-The administration feature uses API endpoints to create and edit People. Administrative pages load their read data through Server Components and therefore do not require read endpoints.
+The administration feature uses API endpoints to create and edit Cherry Kin and Spouses. Administrative pages load their read data through Server Components and therefore do not require read endpoints.
 
 The initial administration endpoints do not require authentication. Authentication and authorization may be added later.
 
@@ -55,7 +55,7 @@ When a timestamp is needed in a response, return it as an ISO 8601 UTC string, f
 ### Success Status Codes
 
 - `200 OK` for a successful update.
-- `201 Created` for a successfully created Person.
+- `201 Created` for a successfully created Cherry Kin or Spouse.
 
 ### Error Shape
 
@@ -88,15 +88,15 @@ The server should write the underlying unexpected error to the `logs` table with
 
 ### Common Error Status Codes
 
-| Status | Meaning |
-| --- | --- |
-| `400 Bad Request` | Malformed JSON, missing field, wrong type, or invalid value. |
-| `404 Not Found` | The requested resource does not exist. |
-| `500 Internal Server Error` | Unexpected server failure. |
+| Status                      | Meaning                                                      |
+| --------------------------- | ------------------------------------------------------------ |
+| `400 Bad Request`           | Malformed JSON, missing field, wrong type, or invalid value. |
+| `404 Not Found`             | The requested resource does not exist.                       |
+| `500 Internal Server Error` | Unexpected server failure.                                   |
 
-## People Administration
+## Cherry Kin Administration
 
-### Create a Person
+### Create a Cherry Kin
 
 ```http
 POST /api/admin/people
@@ -110,19 +110,15 @@ Request body:
   "lastName": "Cherry",
   "birthday": "2026-09-05",
   "deathday": null,
-  "spouse": null,
   "phoneNumber": null,
-  "spouseBirthday": null,
-  "spouseDeathday": null,
   "parentId": 42
 }
 ```
 
 - `firstName`, `lastName`, `birthday`, and `parentId` are required.
-- `deathday`, `spouse`, `phoneNumber`, `spouseBirthday`, and `spouseDeathday` are optional and nullable. Omitted, null, or blank optional values are stored as null, including on PUT.
+- `deathday` and `phoneNumber` are optional and nullable. Omitted, null, or blank optional values are stored as null, including on PUT.
 - `phoneNumber` accepts a string containing 10 U.S. digits with spaces, parentheses, hyphens, or periods; the server stores digits only. Country codes, extensions, and other characters are rejected.
-- Spouse dates use YYYY-MM-DD strings. Spouse Birthday cannot be future; Spouse Death Day requires Spouse Birthday, must be on or after it, and cannot be future. Equal birth/death dates are valid.
-- The database generates the new Person's id; the id is not included in the request URL or request body.
+- The database generates the new Cherry Kin's id; the id is not included in the request URL or request body.
 
 Successful response:
 
@@ -142,19 +138,17 @@ Expected errors include:
 - `INVALID_BIRTHDAY`
 - `INVALID_DEATHDAY`
 - `INVALID_PHONE_NUMBER`
-- `INVALID_SPOUSE_BIRTHDAY`
-- `INVALID_SPOUSE_DEATHDAY`
 - `INVALID_PARENT`
 - `PARENT_TOO_YOUNG`
 - `RELATIONSHIP_CYCLE`
 
-### Edit a Person
+### Edit a Cherry Kin
 
 ```http
 PUT /api/admin/people/{personId}
 ```
 
-The request body uses the same shape as Create a Person. For `personId=1`, `parentId` must be null. For every other Person, `parentId` is required and must be a valid integer.
+The request body uses the same shape as Create a Cherry Kin. For `personId=1`, `parentId` must be null. For every other Cherry Kin, `parentId` is required and must be a valid integer.
 
 Successful response:
 
@@ -168,22 +162,46 @@ Successful response:
 }
 ```
 
-Expected errors include the Create a Person errors and:
+Expected errors include the Create a Cherry Kin errors and:
 
-- `NO_CHANGES` when no editable values differ from the stored Person.
-- `PERSON_NOT_FOUND` when `personId` does not identify an existing Person.
+- `NO_CHANGES` when no editable values differ from the stored Cherry Kin.
+- `PERSON_NOT_FOUND` when `personId` does not identify an existing Cherry Kin.
 
-All validation errors use `400 Bad Request`. A missing Person uses `404 Not Found`.
+All validation errors use `400 Bad Request`. A missing Cherry Kin uses `404 Not Found`.
 
-For both endpoints, blank optional Death Day, Spouse, Phone Number, and spouse-date values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
+For both endpoints, blank optional Death Day and Phone Number values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
+
+Legacy spouse, spouseBirthday, and spouseDeathday request properties are ignored. They never enter the editable values or SQL for these endpoints. Existing legacy columns are left untouched, including when other fields are edited.
+
+## Spouse Administration
+
+- POST /api/admin/partners creates a Spouse: 201 with { "partnerId": 123 }.
+- PUT /api/admin/partners/{partnerId} edits that partners.id: 200 with { "partnerId": 123 }.
+
+Both requests use this JSON body:
+
+```json
+{
+  "firstName": "Herschel",
+  "lastName": "Arant",
+  "birthday": null,
+  "deathday": null,
+  "partnerId": 42
+}
+```
+
+firstName, lastName, and partnerId are required. Names are trimmed and cannot be blank. The body partnerId is the associated people.id; the URL id and response partnerId identify the partners row itself. The associated Cherry Kin must exist. Birthday and Death Day are optional ISO YYYY-MM-DD dates; omitted/null/blank values become null, including on PUT. Birthday cannot be future; Death Day requires Birthday and must be on or after it and not future. Equal dates are valid.
+
+Expected 400 error codes: REQUIRED_FIELD_MISSING, INVALID_BIRTHDAY, INVALID_DEATHDAY, INVALID_PARTNER, and NO_CHANGES for an unchanged edit. PARTNER_NOT_FOUND uses 404 for invalid or nonexistent URL ids. All use the common JSON error envelope and clear Spouse-facing messages. Unexpected failures are logged and use the common 500 response. No delete endpoints are provided.
 
 ## Server-Rendered Page Data
 
 The following data is expected to be loaded by Server Components through server-side functions rather than by calling the application's own API:
+
 - The main Cherry Tree page.
-- The Admin People List.
-- The Add Person page.
-- The Edit Person page.
+- The Cherry Kin & Spouses list.
+- The Add/Edit Cherry Kin pages.
+- The Add/Edit Spouse pages.
 
 These server-side data shapes should be kept close to the pages that use them. They do not need public HTTP contracts in this document unless browser-side requirements later make an endpoint useful.
 

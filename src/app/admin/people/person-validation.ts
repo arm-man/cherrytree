@@ -7,10 +7,7 @@ export interface PersonValues {
   lastName: string;
   birthday: string;
   deathday: string | null;
-  spouse: string | null;
   phoneNumber: string | null;
-  spouseBirthday: string | null;
-  spouseDeathday: string | null;
   parentId: number | null;
 }
 
@@ -19,8 +16,6 @@ export type PersonErrorCode =
   | "INVALID_BIRTHDAY"
   | "INVALID_DEATHDAY"
   | "INVALID_PHONE_NUMBER"
-  | "INVALID_SPOUSE_BIRTHDAY"
-  | "INVALID_SPOUSE_DEATHDAY"
   | "INVALID_PARENT"
   | "PARENT_TOO_YOUNG"
   | "RELATIONSHIP_CYCLE"
@@ -69,7 +64,7 @@ export function isEligibleParentBirthday(
 }
 
 export function getDescendantIds(
-  people: readonly Person[],
+  people: readonly AdminPerson[],
   personId: number,
 ): Set<number> {
   const descendants = new Set<number>();
@@ -92,17 +87,19 @@ export function getFullName(
   return `${person.firstName} ${person.lastName}`;
 }
 
-export function sortByFullName<T extends Person>(people: readonly T[]): T[] {
+export function sortByFullName<
+  T extends Pick<Person, "firstName" | "lastName">,
+>(people: readonly T[]): T[] {
   return [...people].sort((a, b) =>
     getFullName(a).localeCompare(getFullName(b), "en", { sensitivity: "base" }),
   );
 }
 
 export function getEligibleParents(
-  people: readonly Person[],
+  people: readonly AdminPerson[],
   birthday: string,
   personId?: number,
-): Person[] {
+): AdminPerson[] {
   if (personId === 1) return [];
   const descendants =
     personId === undefined
@@ -131,65 +128,22 @@ export function validatePhoneNumber(input: unknown): string | null {
   return normalizePhoneNumber(input);
 }
 
-export function validateSpouseDates(
-  birthday: unknown,
-  deathday: unknown,
-  today: string,
-): Pick<PersonValues, "spouseBirthday" | "spouseDeathday"> {
-  const spouseBirthday =
-    typeof birthday === "string" && !birthday.trim()
-      ? null
-      : (birthday ?? null);
-  const spouseDeathday =
-    typeof deathday === "string" && !deathday.trim()
-      ? null
-      : (deathday ?? null);
-  // Validated ISO calendar dates sort chronologically without timezone conversion.
-  if (
-    spouseBirthday !== null &&
-    (typeof spouseBirthday !== "string" ||
-      !isValidDateOnly(spouseBirthday) ||
-      spouseBirthday > today)
-  ) {
-    throw new PersonValidationError(
-      "INVALID_SPOUSE_BIRTHDAY",
-      "Enter a valid Spouse's Birthday that is not in the future.",
-      "spouseBirthday",
-    );
-  }
-  if (
-    spouseDeathday !== null &&
-    (typeof spouseDeathday !== "string" ||
-      !isValidDateOnly(spouseDeathday) ||
-      spouseBirthday === null ||
-      spouseDeathday < spouseBirthday ||
-      spouseDeathday > today)
-  ) {
-    throw new PersonValidationError(
-      "INVALID_SPOUSE_DEATHDAY",
-      "Enter Spouse's Birthday and a valid Spouse's Death Day on or after it and not in the future.",
-      "spouseDeathday",
-    );
-  }
-  return { spouseBirthday, spouseDeathday };
-}
-
 export function validatePerson(
   input: unknown,
-  people: readonly Person[],
+  people: readonly AdminPerson[],
   today: string,
   personId?: number,
 ): PersonValues {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new PersonValidationError(
       "REQUIRED_FIELD_MISSING",
-      "Enter the Person's details as a JSON object.",
+      "Enter the Cherry Kin's details as a JSON object.",
     );
   }
   if ("id" in input || "personId" in input) {
     throw new PersonValidationError(
       "REQUIRED_FIELD_MISSING",
-      "The request body must contain editable Person fields only.",
+      "The request body must contain editable Cherry Kin fields only.",
     );
   }
   if (
@@ -254,25 +208,12 @@ export function validatePerson(
   const phoneNumber = validatePhoneNumber(
     "phoneNumber" in input ? input.phoneNumber : null,
   );
-  const spouseDates = validateSpouseDates(
-    "spouseBirthday" in input ? input.spouseBirthday : null,
-    "spouseDeathday" in input ? input.spouseDeathday : null,
-    today,
-  );
-  const spouse = "spouse" in input ? input.spouse : null;
-  if (spouse != null && typeof spouse !== "string") {
-    throw new PersonValidationError(
-      "REQUIRED_FIELD_MISSING",
-      "Enter Spouse as text or leave it blank.",
-      "spouse",
-    );
-  }
   const parentId = "parentId" in input ? input.parentId : undefined;
   if (personId === 1) {
     if (parentId !== null) {
       throw new PersonValidationError(
         "INVALID_PARENT",
-        "This Person must have no Parent.",
+        "This Cherry Kin must have no Parent.",
         "parentId",
       );
     }
@@ -311,7 +252,7 @@ export function validatePerson(
     ) {
       throw new PersonValidationError(
         "RELATIONSHIP_CYCLE",
-        "A Person or their descendant cannot be their Parent.",
+        "A Cherry Kin or their descendant cannot be their Parent.",
         "parentId",
       );
     }
@@ -328,9 +269,7 @@ export function validatePerson(
     lastName: input.lastName.trim(),
     birthday: input.birthday,
     deathday: typeof deathday === "string" ? deathday.trim() || null : null,
-    spouse: typeof spouse === "string" ? spouse.trim() || null : null,
     phoneNumber,
-    ...spouseDates,
     parentId: typeof parentId === "number" ? parentId : null,
   };
 }
@@ -344,10 +283,7 @@ export function hasPersonChanges(
     values.lastName !== stored.lastName.trim() ||
     values.birthday !== stored.birthday ||
     values.deathday !== (stored.deathday?.trim() || null) ||
-    values.spouse !== (stored.spouse?.trim() || null) ||
     values.phoneNumber !== stored.phoneNumber ||
-    values.spouseBirthday !== stored.spouseBirthday ||
-    values.spouseDeathday !== stored.spouseDeathday ||
     values.parentId !== stored.parentId
   );
 }

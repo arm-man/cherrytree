@@ -6,11 +6,7 @@ import { pool } from "./db";
 import { validateParentRelationships } from "./people";
 import type { Person } from "./people";
 
-export interface AdminPerson extends Person {
-  phoneNumber: string | null;
-  spouseBirthday: string | null;
-  spouseDeathday: string | null;
-}
+export type AdminPerson = Omit<Person, "spouse">;
 
 export async function readAdminPeople(
   client?: PoolClient,
@@ -19,10 +15,8 @@ export async function readAdminPeople(
   const result = await (client ?? pool).query<AdminPerson>(
     `SELECT id, parent_id AS "parentId", first_name AS "firstName",
        last_name AS "lastName", TO_CHAR(birthday, 'YYYY-MM-DD') AS birthday,
-       TO_CHAR(deathday, 'YYYY-MM-DD') AS deathday, spouse,
-       phone_number AS "phoneNumber",
-       TO_CHAR(spouse_birthday, 'YYYY-MM-DD') AS "spouseBirthday",
-       TO_CHAR(spouse_deathday, 'YYYY-MM-DD') AS "spouseDeathday"
+       TO_CHAR(deathday, 'YYYY-MM-DD') AS deathday,
+       phone_number AS "phoneNumber"
      FROM people ORDER BY id`,
   );
   validateParentRelationships(result.rows);
@@ -70,19 +64,15 @@ export async function insertPerson(
   values: PersonValues,
 ): Promise<number> {
   const result = await client.query<{ id: number }>(
-    `INSERT INTO people (first_name, last_name, birthday, deathday, spouse, parent_id,
-       phone_number, spouse_birthday, spouse_deathday)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+    `INSERT INTO people (first_name, last_name, birthday, deathday, parent_id, phone_number)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
     [
       values.firstName,
       values.lastName,
       values.birthday,
       values.deathday,
-      values.spouse,
       values.parentId,
       values.phoneNumber,
-      values.spouseBirthday,
-      values.spouseDeathday,
     ],
   );
   return result.rows[0].id;
@@ -106,18 +96,14 @@ export async function updatePerson(
 ): Promise<void> {
   await client.query(
     `UPDATE people SET first_name = $1, last_name = $2, birthday = $3,
-       deathday = $4, spouse = $5, parent_id = $6,
-       phone_number = $7, spouse_birthday = $8, spouse_deathday = $9 WHERE id = $10`,
+       deathday = $4, parent_id = $5, phone_number = $6 WHERE id = $7`,
     [
       values.firstName,
       values.lastName,
       values.birthday,
       values.deathday,
-      values.spouse,
       values.parentId,
       values.phoneNumber,
-      values.spouseBirthday,
-      values.spouseDeathday,
       personId,
     ],
   );

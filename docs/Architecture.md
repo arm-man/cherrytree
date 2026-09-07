@@ -203,27 +203,19 @@ The initial administration feature intentionally has no authentication or author
 
 Use these pages:
 
-- `/admin/people` for the searchable Admin People List.
-- `/admin/people/new` for adding a Person.
-- `/admin/people/[id]/edit` for editing a Person.
+- /admin/people for Cherry Kin & Spouses.
+- /admin/people/new and /admin/people/[id]/edit for Add/Edit Cherry Kin.
+- /admin/partners/new and /admin/partners/[id]/edit for Add/Edit Spouse.
 
-Use Server Components to load People data for the administrative pages. Use focused Client Components for immediate list filtering, form state, client-side validation, pending-button behavior, and ordinary HTTP calls to mutation Route Handlers.
+Server Components load administrative data; focused Client Components handle local filtering, forms, validation and ordinary HTTP mutation requests. Partners pages reuse the existing admin layout and styles.
 
-Administrative reads extend the public Person shape with nullable spouseBirthday and spouseDeathday. Spouse dates are ISO date-only strings and remain excluded from the public query and payload. Shared pure validation and phone helpers support the form, server save operation, and public phone formatting.
+Administrative People reads explicitly omit legacy spouse fields and use an AdminPerson shape independent of the public spouse payload. Partners have their own type and validation. The combined list uses a display model with an explicit cherryKin/spouse discriminator, entity id, and six formatted display fields. Two bulk queries plus a name map resolve parents and associated Cherry Kin without N+1 queries.
 
-The Admin People List search value should be stored in the URL query string so it can be preserved when returning from an Add Person or Edit Person page.
+The search and type URL parameters preserve both controls across refreshes and form navigation. Type values are all (default, omitted from URLs), cherryKin and spouse; unknown values become all. Use window.history.replaceState so typing or switching Type filters the loaded rows locally without API/database requests or history entries per keystroke. Search and Type combine with AND logic. Returning from forms loads fresh server data and reapplies both controls.
 
-The administrative pages use the `search` query parameter, for example `/admin/people?search=Cherry`. Typing in the Search box immediately filters the People already loaded in the browser and updates the address bar. Each keystroke does not reload the page, call an API, or query the database; filtering happens locally in the browser.
+Successful creation refreshes server-provided dropdown options while keeping the cleared form and confirmation visible. Successful editing navigates to the list with a fresh server read. Parent eligibility remains authoritative on the server; Spouse options contain only Cherry Kin. No deletion is supported.
 
-The URL preserves the Search text across a refresh and when returning from Add Person or Edit Person. Add and Edit links carry the value forward. Refreshing the page or returning from a form still makes a server request to load fresh People data, then the browser applies the preserved Search text.
-
-Updating browser history means replacing the current history entry with `window.history.replaceState`, rather than adding an entry for each keystroke. Pressing Back therefore does not step through every letter typed into the Search box.
-
-Successful creation refreshes server-provided Parent options while keeping the cleared form and confirmation visible.
-
-The Add Person and Edit Person pages may receive the People data needed to construct Parent options during server rendering. The client may filter those options based on the entered Birthday and the Person's descendants, but the server remains authoritative and must validate Parent eligibility and cycle prevention before writing.
-
-The administrative UI supports creating and editing People only. It does not support deletion.
+Phase 1 leaves public queries and behavior on the legacy spouse model. Admin never synchronizes partners with people spouse fields. See Product.md for migration phases and Database.md for the externally managed schema.
 
 ## Business Logic
 

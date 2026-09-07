@@ -2,51 +2,86 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { filterPeopleBySearch } from "@/app/people-calculations";
-import type { AdminPerson } from "@/server/admin-people-db";
-import { formatPhoneNumber } from "./phone-number";
-import { adminPeopleUrl, formatAdminDate } from "./admin-display";
-import { getFullName } from "./person-validation";
+import type { AdminListRow } from "./admin-display";
+import {
+  adminPeopleUrl,
+  filterAdminRows,
+  parseAdminRowFilter,
+} from "./admin-display";
 import styles from "./admin.module.css";
 
-export function AdminPeopleList({ people }: { people: AdminPerson[] }) {
-  const search = useSearchParams().get("search") ?? "";
+export function AdminPeopleList({ rows }: { rows: AdminListRow[] }) {
+  const params = useSearchParams();
+  const search = params.get("search") ?? "";
+  const type = parseAdminRowFilter(params.get("type"));
   const router = useRouter();
-  const matches = filterPeopleBySearch(people, search);
-  const peopleById = new Map(people.map((person) => [person.id, person]));
+  const matches = filterAdminRows(rows, search, type);
 
   return (
     <>
       <div className={styles.heading}>
-        <h1>People</h1>
-        <Link
-          className={styles.primary}
-          href={adminPeopleUrl("/admin/people/new", search)}
-          prefetch={false}
-        >
-          Add Person
-        </Link>
+        <h1>Cherry Kin &amp; Spouses</h1>
+        <div className={styles.actions}>
+          <Link
+            className={styles.primary}
+            href={adminPeopleUrl("/admin/people/new", search, type)}
+            prefetch={false}
+          >
+            Add Cherry Kin
+          </Link>
+          <Link
+            className={styles.primary}
+            href={adminPeopleUrl("/admin/partners/new", search, type)}
+            prefetch={false}
+          >
+            Add Spouse
+          </Link>
+        </div>
       </div>
       <div className={styles.search}>
-        <label htmlFor="people-search">Search</label>
-        <input
-          id="people-search"
-          type="search"
-          placeholder="Search for a name"
-          value={search}
-          onChange={(event) =>
-            window.history.replaceState(
-              null,
-              "",
-              adminPeopleUrl("/admin/people", event.target.value),
-            )
-          }
-        />
+        <div className={styles.field}>
+          <label htmlFor="people-search">Search</label>
+          <input
+            id="people-search"
+            type="search"
+            placeholder="Search all columns"
+            value={search}
+            onChange={(event) =>
+              window.history.replaceState(
+                null,
+                "",
+                adminPeopleUrl("/admin/people", event.target.value, type),
+              )
+            }
+          />
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="row-type">Type</label>
+          <select
+            id="row-type"
+            value={type}
+            onChange={(event) =>
+              window.history.replaceState(
+                null,
+                "",
+                adminPeopleUrl(
+                  "/admin/people",
+                  search,
+                  parseAdminRowFilter(event.target.value),
+                ),
+              )
+            }
+          >
+            <option value="all">All</option>
+            <option value="cherryKin">Cherry Kin</option>
+            <option value="spouse">Spouses</option>
+          </select>
+        </div>
       </div>
       <div
         className="table-scroll"
         role="region"
-        aria-label="People"
+        aria-label="Cherry Kin & Spouses"
         tabIndex={0}
       >
         <table className={styles.table}>
@@ -58,9 +93,7 @@ export function AdminPeopleList({ people }: { people: AdminPerson[] }) {
                 "Death Day",
                 "Parent's Full Name",
                 "Phone Number",
-                "Spouse (Sp)",
-                "Sp Birthday",
-                "Sp Death Day",
+                "Spouse",
               ].map((label) => (
                 <th key={label} scope="col">
                   {label}
@@ -70,14 +103,14 @@ export function AdminPeopleList({ people }: { people: AdminPerson[] }) {
           </thead>
           <tbody>
             {matches.map((person) => {
-              const parent = peopleById.get(person.parentId ?? 0);
               const href = adminPeopleUrl(
-                `/admin/people/${person.id}/edit`,
+                `/admin/${person.type === "cherryKin" ? "people" : "partners"}/${person.id}/edit`,
                 search,
+                type,
               );
               return (
                 <tr
-                  key={person.id}
+                  key={`${person.type}-${person.id}`}
                   onClick={(event) => {
                     // Keep the native link's keyboard, new-tab, and context-menu behavior.
                     if (
@@ -90,16 +123,14 @@ export function AdminPeopleList({ people }: { people: AdminPerson[] }) {
                 >
                   <td>
                     <Link href={href} prefetch={false}>
-                      {getFullName(person)}
+                      {person.fullName}
                     </Link>
                   </td>
-                  <td>{formatAdminDate(person.birthday)}</td>
-                  <td>{formatAdminDate(person.deathday)}</td>
-                  <td>{parent ? getFullName(parent) : ""}</td>
-                  <td>{formatPhoneNumber(person.phoneNumber)}</td>
-                  <td>{person.spouse ?? ""}</td>
-                  <td>{formatAdminDate(person.spouseBirthday)}</td>
-                  <td>{formatAdminDate(person.spouseDeathday)}</td>
+                  <td>{person.birthday}</td>
+                  <td>{person.deathday}</td>
+                  <td>{person.parentName}</td>
+                  <td>{person.phoneNumber}</td>
+                  <td>{person.spouseName}</td>
                 </tr>
               );
             })}
@@ -108,8 +139,8 @@ export function AdminPeopleList({ people }: { people: AdminPerson[] }) {
       </div>
       <p role="status" className={styles.listStatus}>
         {matches.length === 0
-          ? "No people found."
-          : `${matches.length} ${matches.length === 1 ? "Person" : "People"}`}
+          ? "No Cherry Kin or Spouses found."
+          : `${matches.length} ${matches.length === 1 ? "record" : "records"}`}
       </p>
     </>
   );

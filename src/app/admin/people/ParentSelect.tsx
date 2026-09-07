@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Person } from "@/server/people";
+import type { AdminPerson } from "@/server/admin-people-db";
 import { formatAdminDate } from "./admin-display";
 import { getFullName } from "./person-validation";
 import styles from "./admin.module.css";
 
-function optionLabel(person: Person): string {
+function optionLabel(person: AdminPerson): string {
   return `${getFullName(person)} — ${formatAdminDate(person.birthday)}`;
 }
 
@@ -18,8 +18,8 @@ export function ParentSelect({
   onChange,
   onBlur,
 }: {
-  options: Person[];
-  selected: Person | undefined;
+  options: AdminPerson[];
+  selected: AdminPerson | undefined;
   disabled: boolean;
   error?: string;
   onChange: (id: number | null) => void;
@@ -48,7 +48,7 @@ export function ParentSelect({
         ?.scrollIntoView({ block: "nearest" });
   }, [expanded, active]);
 
-  function select(person: Person): void {
+  function select(person: AdminPerson): void {
     onChange(person.id);
     setQuery(null);
     setOpen(false);

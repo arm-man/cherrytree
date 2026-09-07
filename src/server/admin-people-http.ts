@@ -14,7 +14,7 @@ export async function handlePersonSave(
     } catch {
       throw new PersonValidationError(
         "REQUIRED_FIELD_MISSING",
-        "Send a valid JSON object with the Person's details.",
+        "Send a valid JSON object with the Cherry Kin's details.",
       );
     }
     const savedId = await savePerson(input, personId);

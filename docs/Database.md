@@ -31,42 +31,60 @@ The schema is intentionally small and uses ordinary PostgreSQL tables, constrain
 
 ### `people`
 
-Stores one row for each person.
+Stores one row for each Cherry Kin. Public terminology remains Person during Phase 1.
 
-| Column | Type | Null | Purpose |
-| --- | --- | --- | --- |
-| `id` | `integer` identity | No | Primary key. |
-| `parent_id` | `integer` | Yes | The id of the Person's immediate parent. When NULL it is the single top-level Person that has no immediate parent. |
-| `first_name` | `text` | No | The first name of the Person. |
-| `last_name` | `text` | No | The last name of the Person. |
-| `birthday` | `date` | No | The birth date of the Person. |
-| `deathday` | `date` | Yes | The date of death of the Person. |
-| `spouse` | `text` | Yes | The Person's spouse. |
-| `phone_number` | `text` | Yes | Optional U.S. phone number, stored as 10 digits. |
-| `spouse_birthday` | `date` | Yes | Optional spouse birth date. |
-| `spouse_deathday` | `date` | Yes | Optional spouse death date. |
-| `created_at` | `timestamptz` | No | Person creation time. Use DEFAULT NOW().|
+| Column            | Type               | Null | Purpose                                                                                                            |
+| ----------------- | ------------------ | ---- | ------------------------------------------------------------------------------------------------------------------ |
+| `id`              | `integer` identity | No   | Primary key.                                                                                                       |
+| `parent_id`       | `integer`          | Yes  | The id of the Person's immediate parent. When NULL it is the single top-level Person that has no immediate parent. |
+| `first_name`      | `text`             | No   | The first name of the Person.                                                                                      |
+| `last_name`       | `text`             | No   | The last name of the Person.                                                                                       |
+| `birthday`        | `date`             | No   | The birth date of the Person.                                                                                      |
+| `deathday`        | `date`             | Yes  | The date of death of the Person.                                                                                   |
+| `spouse`          | `text`             | Yes  | The Person's spouse.                                                                                               |
+| `phone_number`    | `text`             | Yes  | Optional U.S. phone number, stored as 10 digits.                                                                   |
+| `spouse_birthday` | `date`             | Yes  | Optional spouse birth date.                                                                                        |
+| `spouse_deathday` | `date`             | Yes  | Optional spouse death date.                                                                                        |
+| `created_at`      | `timestamptz`      | No   | Person creation time. Use DEFAULT NOW().                                                                           |
 
 Constraints:
 
 - Primary key on `id`.
 - `people_spouse_deathday_requires_birthday_check`: `spouse_deathday IS NULL OR spouse_birthday IS NOT NULL`.
-- The three columns added by `003_migration_people_phone_spouse_dates.sql` are nullable with no non-null default; existing rows need no changes. Phone format validation belongs to the application, with no database format constraint.
+- Phone Number and the retained legacy spouse columns are nullable. Phone format validation belongs to the application, with no database format constraint. Phase 1 migration files are handled externally; application work must not modify database/ files.
 - parent_id is a self-referencing foreign key to people(id).
 - Use the default non-cascading foreign-key behavior so PostgreSQL prevents deleting a Person while another Person references that Person as a parent.
 - parent_id may be NULL only for the single top-level Person.
 
 After People data is read from the database, the server must test the parent relationships for cycles before deriving descendants or returning the data to the client. If a cycle is found, the server must write an error to the `logs` table and return a controlled internal error to the client. The server must also test that exactly one root (parent_id of NULL) exists.
 
+### `partners`
+
+Stores one Spouse per row, separate from people.
+
+| Column     | Type             | Null | Purpose                          |
+| ---------- | ---------------- | ---- | -------------------------------- |
+| id         | integer identity | No   | Primary key, generated always.   |
+| partner_id | integer          | No   | Associated Cherry Kin people.id. |
+| first_name | text             | No   | Spouse first name.               |
+| last_name  | text             | No   | Spouse last name.                |
+| birthday   | date             | Yes  | Spouse birth date.               |
+| deathday   | date             | Yes  | Spouse death date.               |
+| created_at | timestamptz      | No   | Defaults to NOW().               |
+
+partners_partner_id_fkey references people(id) ON DELETE CASCADE. partners_deathday_requires_birthday_check requires deathday IS NULL OR birthday IS NOT NULL. There is no uniqueness constraint on partner_id. The admin application offers no deletion operations.
+
+The table already exists and migration files are managed externally. Phase 1 admin reads/writes partners and omits legacy spouse columns from all people queries and saves. Those columns remain for public behavior; no synchronization is performed. Later phases migrate public behavior and finally remove legacy columns.
+
 ### `logs`
 
 Stores server-side error, warning, and informational messages for operational troubleshooting.
 
-| Column | Type | Null | Purpose |
-| --- | --- | --- | --- |
-| `severity` | `text` | No | Log severity. Use `DEFAULT 'error'`; warnings use `warning`; informational actions use `info`. |
-| `message` | `text` | No | Non-sensitive log details. |
-| `created_at` | `timestamptz` | No | Log creation time. Use `DEFAULT NOW()`. |
+| Column       | Type          | Null | Purpose                                                                                        |
+| ------------ | ------------- | ---- | ---------------------------------------------------------------------------------------------- |
+| `severity`   | `text`        | No   | Log severity. Use `DEFAULT 'error'`; warnings use `warning`; informational actions use `info`. |
+| `message`    | `text`        | No   | Non-sensitive log details.                                                                     |
+| `created_at` | `timestamptz` | No   | Log creation time. Use `DEFAULT NOW()`.                                                        |
 
 The application must not store credentials, connection strings, or other secrets in log messages.
 
@@ -96,6 +114,8 @@ No distributed locking or idempotency-key mechanism is required for the expected
 
 Administrative transactions acquire a PostgreSQL `SHARE ROW EXCLUSIVE` lock on `people` before reading. This serializes writers so validation and the resulting write use a consistent parent graph, while ordinary page reads remain available. The transaction uses UTC for authoritative current-date validation and releases its client after commit or rollback.
 
+Spouse saves reuse the short admin transaction and people writer lock. Read Cherry Kin to validate the association, verify the partners row exists on edit, reject unchanged edits, validate fields/dates, write only partners, and add an informational log before commit. The selected people.id must exist. Birthday is optional; Death Day requires Birthday. Other date rules match Product.md.
+
 ## Indexes
 
 No additional indexes are required initially. The initial page load reads all People records, and sorting, searching, child counts, genealogy grouping, and cycle detection are performed after the read rather than by database queries. Add an index only if a later access pattern or measured performance problem justifies it.
@@ -113,9 +133,8 @@ For administrative creation and editing:
 - Trim First Name and Last Name and reject either value when it is null or blank.
 - Birthday is required and must not be in the future.
 - Death Day is nullable. When provided, it must not be before Birthday or in the future.
-- Spouse is nullable. Normalize a blank Spouse to null.
 - A blank Death Day is stored as null.
-- Phone Number and spouse dates are nullable; blank values become null. Normalize and validate phones and spouse dates using the rules in `Product.md`, including allowing equal spouse birth/death dates.
+- Phone Number is nullable; blank values become null. Normalize and validate phones using Product.md. Legacy spouse fields are not editable and are never written by admin.
 - id=1 must have parent_id of null. Every other Person must have a non-null parent_id that references an existing Person.
 - The proposed Parent must have been at least 15 years old on the Person's Birthday.
 - A Person cannot be their own Parent.
@@ -125,4 +144,4 @@ For administrative creation and editing:
 
 ## Manual Database Smoke Tests
 
-Perform manual smoke tests against the development database. See `AdminPeopleSmokeTests.md` for the phone and spouse-date checklist. Apply numbered migrations before running the updated admin pages.
+Perform manual smoke tests against the development database. See `AdminPeopleSmokeTests.md` for the Phase 1 checklist. Assume the externally managed partners table already exists. Do not change migration or seed files as part of application verification.

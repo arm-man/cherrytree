@@ -19,10 +19,7 @@ const root: AdminPerson = {
   lastName: "Cherry",
   birthday: "1947-05-17",
   deathday: "2020-01-01",
-  spouse: null,
   phoneNumber: null,
-  spouseBirthday: null,
-  spouseDeathday: null,
   parentId: null,
 };
 const child: AdminPerson = {
@@ -46,7 +43,6 @@ const valid = {
   lastName: " Cherry ",
   birthday: "2000-01-01",
   deathday: " ",
-  spouse: "  ",
   parentId: 1,
 };
 
@@ -81,16 +77,9 @@ test("normalizes names and blank optional fields while retaining date-only strin
     lastName: "Cherry",
     birthday: "2000-01-01",
     deathday: null,
-    spouse: null,
     phoneNumber: null,
-    spouseBirthday: null,
-    spouseDeathday: null,
     parentId: 1,
   });
-  assert.equal(
-    validatePerson({ ...valid, spouse: " Pat " }, people, today).spouse,
-    "Pat",
-  );
 });
 
 test("rejects malformed bodies, missing fields and wrong field types", () => {
@@ -102,7 +91,6 @@ test("rejects malformed bodies, missing fields and wrong field types", () => {
     { ...valid, id: 99 },
     { ...valid, firstName: " " },
     { ...valid, lastName: 2 },
-    { ...valid, spouse: {} },
     { ...valid, birthday: null },
     { ...valid, parentId: null },
   ])
@@ -190,7 +178,6 @@ test("normalized unchanged values compare equal, while each editable field is de
       lastName: "Cherry ",
       birthday: child.birthday,
       deathday: "",
-      spouse: " Pat ",
       parentId: 1,
     },
     people,
@@ -203,10 +190,7 @@ test("normalized unchanged values compare equal, while each editable field is de
     { lastName: "Smith" },
     { birthday: "1963-01-01" },
     { deathday: today },
-    { spouse: null },
     { phoneNumber: "7035551234" },
-    { spouseBirthday: "1975-12-14" },
-    { spouseDeathday: "2008-03-02" },
     { parentId: 3 },
   ])
     assert.equal(hasPersonChanges({ ...values, ...change }, stored), true);
@@ -249,36 +233,19 @@ test("optional admin values can be omitted, null, or cleared; clearing counts as
   const stored: AdminPerson = {
     ...child,
     phoneNumber: "7035551234",
-    spouseBirthday: "1975-12-14",
-    spouseDeathday: "2008-03-02",
   };
   for (const empty of [undefined, null, "", "   "]) {
     const values = validatePerson(
       {
         ...valid,
         phoneNumber: empty,
-        spouseBirthday: empty,
-        spouseDeathday: empty,
       },
       people,
       today,
     );
     assert.equal(values.phoneNumber, null);
-    assert.equal(values.spouseBirthday, null);
-    assert.equal(values.spouseDeathday, null);
     assert.equal(
       hasPersonChanges({ ...stored, phoneNumber: values.phoneNumber }, stored),
-      true,
-    );
-    assert.equal(
-      hasPersonChanges(
-        {
-          ...stored,
-          spouseBirthday: values.spouseBirthday,
-          spouseDeathday: values.spouseDeathday,
-        },
-        stored,
-      ),
       true,
     );
   }
@@ -293,58 +260,25 @@ test("optional admin values can be omitted, null, or cleared; clearing counts as
   assert.equal(hasPersonChanges(values, stored), false);
 });
 
-test("spouse dates accept birthday alone and equal birth/death dates, including today", () => {
-  assert.equal(
-    validatePerson({ ...valid, spouseBirthday: today }, people, today)
-      .spouseDeathday,
-    null,
-  );
-  for (const spouseBirthday of ["1975-12-14", today]) {
-    assert.equal(
-      validatePerson(
-        { ...valid, spouseBirthday, spouseDeathday: spouseBirthday },
-        people,
-        today,
-      ).spouseDeathday,
-      spouseBirthday,
-    );
-  }
-  assert.equal(
-    validatePerson(
-      { ...valid, spouseBirthday: "1975-12-14", spouseDeathday: "2008-03-02" },
-      people,
-      today,
-    ).spouseDeathday,
-    "2008-03-02",
-  );
-});
-
-test("spouse dates reject missing birthday, earlier death, future dates and malformed values", () => {
-  rejects({ ...valid, spouseDeathday: today }, "INVALID_SPOUSE_DEATHDAY");
-  rejects(
-    { ...valid, spouseBirthday: "2000-01-01", spouseDeathday: "1999-12-31" },
-    "INVALID_SPOUSE_DEATHDAY",
-  );
-  for (const invalid of [
-    "2026-09-06",
-    "2026-02-29",
-    "2026-04-31",
-    "2026-01-01T00:00:00Z",
-    20000101,
-    false,
-    {},
-  ]) {
-    rejects({ ...valid, spouseBirthday: invalid }, "INVALID_SPOUSE_BIRTHDAY");
-    rejects(
-      { ...valid, spouseBirthday: "1975-12-14", spouseDeathday: invalid },
-      "INVALID_SPOUSE_DEATHDAY",
-    );
-  }
-});
-
 test("admin display abbreviates months and leaves absent values blank", () => {
   assert.equal(formatAdminDate("1975-12-14"), "Dec 14, 1975");
   assert.equal(formatAdminDate("2008-03-02"), "Mar 2, 2008");
   assert.equal(formatAdminDate(null), "");
   assert.equal(formatPhoneNumber(null), "");
+});
+
+test("legacy spouse input is ignored and cannot become editable Cherry Kin data", () => {
+  const values = validatePerson(
+    {
+      ...valid,
+      spouse: "Hidden",
+      spouseBirthday: "invalid",
+      spouseDeathday: true,
+    },
+    people,
+    today,
+  );
+  assert.equal("spouse" in values, false);
+  assert.equal("spouseBirthday" in values, false);
+  assert.equal("spouseDeathday" in values, false);
 });
