@@ -1,4 +1,4 @@
-import { getDaysUntilNextBirthday } from "./date-calculations.ts";
+import { calculateAge, getDaysUntilNextBirthday } from "./date-calculations.ts";
 
 interface PersonRelationship {
   id: number;
@@ -26,6 +26,7 @@ interface SearchablePerson {
 
 export const SORT_OPTIONS = [
   "Birthday",
+  "Age",
   "Upcoming Birthday",
   "Death Day",
   "First Name",
@@ -183,6 +184,26 @@ export function sortPeople<T extends ListPerson>(
     let primaryOrder = 0;
 
     switch (sortOption) {
+      case "Age": {
+        // Use the same completed-years calculation as the Age column.
+        const firstAge = firstPerson.birthday
+          ? calculateAge(firstPerson.birthday, firstPerson.deathday ?? today)
+          : NaN;
+        const secondAge = secondPerson.birthday
+          ? calculateAge(secondPerson.birthday, secondPerson.deathday ?? today)
+          : NaN;
+        const firstHasAge = Number.isFinite(firstAge);
+        const secondHasAge = Number.isFinite(secondAge);
+
+        if (!firstHasAge || !secondHasAge) {
+          return Number(secondHasAge) - Number(firstHasAge);
+        }
+
+        return (
+          secondAge - firstAge ||
+          compareText(firstPerson.birthday, secondPerson.birthday)
+        );
+      }
       case "Birthday":
       case "Upcoming Birthday":
         // Missing dates stay below real dates; never parse null as a date.

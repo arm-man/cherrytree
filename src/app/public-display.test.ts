@@ -360,6 +360,13 @@ test("partners participate in all existing sorts and blank children follow zero"
     "partner-2",
   ]);
   assert.deepEqual(keysFor("Death Day"), ["partner-1", "person-1"]);
+  assert.deepEqual(keysFor("Age"), [
+    "person-1",
+    "partner-1",
+    "person-2",
+    "partner-3",
+    "partner-2",
+  ]);
   assert.deepEqual(keysFor("First Name"), [
     "partner-1",
     "person-2",
@@ -388,6 +395,40 @@ test("partners participate in all existing sorts and blank children follow zero"
     "partner-1",
     "partner-2",
   ]);
+});
+
+test("Age interleaves living and deceased Cherry Kin and Spouses using their displayed ages", () => {
+  const rows = getPublicRows(people.slice(0, 2), [
+    { ...partners[0], birthday: "1950-06-15", deathday: "2010-06-14" },
+    partners[1],
+    { ...partners[2], birthday: "1945-06-15" },
+    { ...partners[0], id: 4, birthday: "1900-01-01", deathday: "1956-01-01" },
+  ]);
+  const sorted = sortPeople(
+    getListRows(rows.people, rows.partners),
+    "Age",
+    "2026-12-30",
+  );
+
+  assert.deepEqual(
+    sorted.map((row) => row.rowKey),
+    [
+      "partner-3",
+      "person-1",
+      "partner-1",
+      "partner-4",
+      "person-2",
+      "partner-2",
+    ],
+  );
+  assert.deepEqual(
+    sorted.map((row) =>
+      row.birthday === null
+        ? ""
+        : formatAge(row.birthday, row.deathday, "2026-12-30"),
+    ),
+    ["81", "79 †", "59 †", "56 †", "56", ""],
+  );
 });
 
 test("only Death Day omits null death days, and no sort mutates the source List", () => {

@@ -108,12 +108,46 @@ test("sorts every List option, omits null death days and keeps missing spouses l
     sortPeople(people, sortOption, "2026-12-30").map((person) => person.id);
 
   assert.deepEqual(idsFor("Birthday"), [1, 3, 2]);
+  assert.deepEqual(idsFor("Age"), [1, 2, 3]);
   assert.deepEqual(idsFor("Upcoming Birthday"), [1, 2, 3]);
   assert.deepEqual(idsFor("Death Day"), [3, 1]);
   assert.deepEqual(idsFor("First Name"), [3, 2, 1]);
   assert.deepEqual(idsFor("Last Name"), [3, 1, 2]);
   assert.deepEqual(idsFor("Spouse"), [1, 3, 2]);
   assert.deepEqual(idsFor("Children"), [1, 3, 2]);
+});
+
+test("Age sorts numerically with unknown ages below zero and Birthday ascending for ties", () => {
+  const rows = [
+    { ...people[1], id: 4, firstName: "Aaron", birthday: "2000-09-01" },
+    { ...people[1], id: 5, firstName: "Zelda", birthday: "2000-01-01" },
+    { ...people[1], id: 6, birthday: null },
+    { ...people[1], id: 7, birthday: "2026-09-08" },
+    { ...people[1], id: 8, birthday: "2017-09-08" },
+    { ...people[1], id: 9, birthday: "2016-09-08" },
+    { ...people[1], id: 10, birthday: "invalid" },
+    { ...people[1], id: 11, birthday: "2000-09-09" },
+    { ...people[1], id: 12, birthday: "2000-09-08" },
+  ];
+
+  assert.deepEqual(
+    sortPeople(rows, "Age", "2026-09-08").map((row) => row.id),
+    [5, 4, 12, 11, 9, 8, 7, 6, 10],
+  );
+});
+
+test("Age uses today's full date for living people and stays fixed at death for deceased people", () => {
+  const rows = [
+    { ...people[1], id: 4, birthday: "2000-09-09" },
+    { ...people[1], id: 5, birthday: "1950-09-09", deathday: "1976-09-09" },
+    { ...people[1], id: 6, birthday: "1900-09-09", deathday: "1926-09-08" },
+  ];
+
+  const idsOn = (today: string) =>
+    sortPeople(rows, "Age", today).map((row) => row.id);
+  assert.deepEqual(idsOn("2026-09-08"), [5, 6, 4]);
+  assert.deepEqual(idsOn("2026-09-09"), [5, 4, 6]);
+  assert.deepEqual(idsOn("2027-09-09"), [4, 5, 6]);
 });
 
 test("null, empty and whitespace-only Spouse values stay below populated names", () => {

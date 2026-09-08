@@ -356,7 +356,11 @@ export function PersonList({
             <option value="" aria-label="None" disabled />
             {SORT_OPTIONS.map((sortOption) => (
               <option key={sortOption} value={sortOption}>
-                {sortOption === "Death Day" ? "Date of Passing" : sortOption}
+                {sortOption === "Death Day"
+                  ? "Date of Passing"
+                  : sortOption === "Children"
+                    ? "# of Children"
+                    : sortOption}
               </option>
             ))}
           </select>
