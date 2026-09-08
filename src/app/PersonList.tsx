@@ -43,6 +43,7 @@ interface PersonTableProps {
   people: readonly PublicRow[];
   peopleById: ReadonlyMap<number, CherryKinRow>;
   showChildren?: boolean;
+  showPassedAway?: boolean;
   showParent?: boolean;
   showPhone?: boolean;
   indentPartners?: boolean;
@@ -115,6 +116,7 @@ function PersonTable({
   people,
   peopleById,
   showChildren = false,
+  showPassedAway = false,
   showParent = false,
   showPhone = false,
   indentPartners = false,
@@ -123,17 +125,22 @@ function PersonTable({
   isRowHighlighted,
   onPersonNameClick,
 }: PersonTableProps) {
-  const columnCount = 4 + Number(showChildren) + Number(showParent);
+  const columnCount =
+    4 + Number(showChildren) + Number(showParent) + Number(showPassedAway);
 
   return (
     <div className="table-scroll">
-      <table aria-label={ariaLabel}>
+      <table
+        aria-label={ariaLabel}
+        className={showPassedAway ? "passing-table" : undefined}
+      >
         <thead>
           <tr>
             <th scope="col">Name</th>
             {showParent ? <th scope="col">Parent</th> : null}
             <th scope="col">Age</th>
             <th scope="col">Birthed</th>
+            {showPassedAway ? <th scope="col">Passed Away</th> : null}
             {showChildren ? <th scope="col">Children</th> : null}
             <th scope="col">Spouse</th>
           </tr>
@@ -220,6 +227,13 @@ function PersonTable({
                       ? ""
                       : formatDate(person.birthday)}
                   </td>
+                  {showPassedAway ? (
+                    <td>
+                      {person.deathday === null
+                        ? ""
+                        : formatDate(person.deathday)}
+                    </td>
+                  ) : null}
                   {showChildren ? <td>{person.childCount ?? ""}</td> : null}
                   <td>{person.spouse ?? ""}</td>
                 </tr>
@@ -342,7 +356,7 @@ export function PersonList({
             <option value="" aria-label="None" disabled />
             {SORT_OPTIONS.map((sortOption) => (
               <option key={sortOption} value={sortOption}>
-                {sortOption}
+                {sortOption === "Death Day" ? "Date of Passing" : sortOption}
               </option>
             ))}
           </select>
@@ -369,6 +383,7 @@ export function PersonList({
           people={listPeople}
           peopleById={peopleById}
           showChildren
+          showPassedAway={listSort === "Death Day"}
           today={today}
           isBirthdayHighlighted={
             listSort === "Upcoming Birthday" && today
