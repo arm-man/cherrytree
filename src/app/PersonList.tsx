@@ -20,7 +20,12 @@ import {
   sortPeople,
 } from "./people-calculations";
 import type { SortOption } from "./people-calculations";
-import { getListRows, getParentSection, getPublicRows } from "./public-display";
+import {
+  getAncestorSections,
+  getListRows,
+  getParentSection,
+  getPublicRows,
+} from "./public-display";
 import type {
   CherryKinRow,
   PublicPartner,
@@ -161,15 +166,21 @@ function PersonTable({
                         : "person-name"
                     }
                   >
-                    <button
-                      type="button"
-                      className="person-name-button"
-                      onClick={() =>
-                        onPersonNameClick(person.navigationPersonId)
-                      }
-                    >
-                      {getFullName(person)}
-                    </button>
+                    {person.navigationPersonId === null ? (
+                      <span className="person-name-text">
+                        {getFullName(person)}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="person-name-button"
+                        onClick={() =>
+                          onPersonNameClick(person.navigationPersonId)
+                        }
+                      >
+                        {getFullName(person)}
+                      </button>
+                    )}
                     {showPhone &&
                     person.type === "cherryKin" &&
                     person.phoneNumber !== null ? (
@@ -240,6 +251,11 @@ export function PersonList({
   const peopleById = new Map(people.map((person) => [person.id, person]));
   const rootPerson = peopleById.get(rootPersonId);
   const parentSection = getParentSection(rootPerson, partners);
+  const ancestorSections = getAncestorSections(
+    rootPerson,
+    peopleById,
+    partners,
+  );
   const generations = getGenealogyGenerations(people, rootPersonId);
   const filteredPeople = filterPeopleBySearch(
     getListRows(people, partners),
@@ -259,13 +275,6 @@ export function PersonList({
   function showPersonAsParent(personId: number): void {
     setRootPersonId(personId);
     setView("genealogy");
-  }
-
-  function handleParentNameClick(personId: number): void {
-    const person = peopleById.get(personId);
-    if (person && person.parentId !== null) {
-      setRootPersonId(person.parentId);
-    }
   }
 
   function handleSortChange(value: string): void {
@@ -372,10 +381,27 @@ export function PersonList({
         />
       ) : (
         <div className="genealogy-view">
-          <section className="generation">
-            <h2>{parentSection.title}</h2>
+          {ancestorSections.map((section) => (
+            <section className="generation" key={section.title}>
+              <h2>{section.title}</h2>
+              <PersonTable
+                ariaLabel={section.title}
+                showPhone
+                indentPartners={section.rows.length > 2}
+                people={section.rows}
+                peopleById={peopleById}
+                today={today}
+                isRowHighlighted={(person) =>
+                  personMatchesSearch(person, searchText)
+                }
+                onPersonNameClick={showPersonAsParent}
+              />
+            </section>
+          ))}
+
+          <section className="generation root-generation">
             <PersonTable
-              ariaLabel={parentSection.title}
+              ariaLabel="Selected Cherry Kin and Spouses"
               showPhone
               indentPartners={parentSection.rows.length > 2}
               people={parentSection.rows}
@@ -384,7 +410,7 @@ export function PersonList({
               isRowHighlighted={(person) =>
                 personMatchesSearch(person, searchText)
               }
-              onPersonNameClick={handleParentNameClick}
+              onPersonNameClick={showPersonAsParent}
             />
           </section>
 

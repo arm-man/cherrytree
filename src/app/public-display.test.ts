@@ -9,6 +9,7 @@ import {
   sortPeople,
 } from "./people-calculations.ts";
 import {
+  getAncestorSections,
   getListRows,
   getParentSection,
   getPublicRows,
@@ -120,7 +121,7 @@ test("builds separate rows with ID associations, comma-separated spouses and no 
   );
   assert.deepEqual(
     rows.partners.map((partner) => partner.navigationPersonId),
-    [1, 1, 2, 3],
+    [null, null, null, null],
   );
   assert.deepEqual(
     rows.partners.map((partner) => partner.childCount),
@@ -178,22 +179,109 @@ test("ignores legacy spouse values even when supplied by an old caller", () => {
   assert.deepEqual(filterPeopleBySearch(rows.people, "Legacy"), []);
 });
 
-test("Parent section includes zero, one or multiple partners, including unknown birthdays", () => {
+test("Root group includes zero, one or multiple partners, including unknown birthdays", () => {
   for (const count of [0, 1, 2]) {
     const selected = count === 1 ? [partners[1]] : partners.slice(0, count);
     const rows = getPublicRows(people, selected);
     const section = getParentSection(rows.people[0], rows.partners);
-    assert.equal(
-      section.title,
-      ["Parent", "Parents", "Parent & Spouses"][count],
-    );
     assert.equal(section.rows.length, count + 1);
     assert.equal(section.rows[0].rowKey, "person-1");
-    assert.ok(section.rows.every((row) => row.navigationPersonId === 1));
+    assert.equal(section.rows[0].navigationPersonId, 1);
+    assert.ok(
+      section.rows.slice(1).every((row) => row.navigationPersonId === null),
+    );
     if (count > 0) {
       assert.equal(section.rows.at(-1)?.birthday, null);
     }
   }
+});
+
+test("only Cherry Kin are navigation targets, always using their own ID", () => {
+  const rows = getPublicRows(people, partners);
+  const peopleById = new Map(rows.people.map((person) => [person.id, person]));
+  for (const root of rows.people) {
+    const sections = [
+      getParentSection(root, rows.partners),
+      ...getAncestorSections(root, peopleById, rows.partners),
+    ];
+    const displayedRows = [
+      ...getListRows(rows.people, rows.partners),
+      ...sections.flatMap((section) => section.rows),
+      ...Object.values(getGenealogyGenerations(rows.people, root.id)).flat(),
+    ];
+    for (const row of displayedRows) {
+      assert.equal(
+        row.navigationPersonId,
+        row.type === "cherryKin" ? row.id : null,
+      );
+    }
+  }
+});
+
+test("ancestry follows only parent IDs, includes every associated spouse and stops at three generations", () => {
+  const rows = getPublicRows(people, partners);
+  const peopleById = new Map(rows.people.map((person) => [person.id, person]));
+  const sections = getAncestorSections(
+    rows.people[3],
+    peopleById,
+    rows.partners,
+  );
+  assert.deepEqual(
+    sections.map((section) => ({
+      title: section.title,
+      keys: section.rows.map((row) => row.rowKey),
+    })),
+    [
+      {
+        title: "Great Grandparents",
+        keys: ["person-1", "partner-1", "partner-2"],
+      },
+      { title: "Grandparents", keys: ["person-2", "partner-3"] },
+      { title: "Parents", keys: ["person-3", "partner-4"] },
+    ],
+  );
+  // The overlapping partner IDs and duplicate names above cannot affect the chain.
+  assert.equal(sections[0].rows[2].birthday, null);
+  assert.deepEqual(
+    getAncestorSections(rows.people[4], peopleById, rows.partners).map(
+      (section) => section.rows[0].id,
+    ),
+    [2, 3, 4],
+  );
+});
+
+test("ancestor headings stop at null or missing parents, including a missing root", () => {
+  const rows = getPublicRows(people, partners);
+  const peopleById = new Map(rows.people.map((person) => [person.id, person]));
+  for (const [rootIndex, titles] of [
+    [0, []],
+    [1, ["Parents"]],
+    [2, ["Grandparents", "Parents"]],
+  ] as const) {
+    assert.deepEqual(
+      getAncestorSections(
+        rows.people[rootIndex],
+        peopleById,
+        rows.partners,
+      ).map((section) => section.title),
+      titles,
+    );
+  }
+  assert.deepEqual(
+    getAncestorSections(undefined, peopleById, rows.partners),
+    [],
+  );
+  peopleById.delete(2);
+  assert.deepEqual(
+    getAncestorSections(rows.people[2], peopleById, rows.partners),
+    [],
+  );
+  assert.deepEqual(
+    getAncestorSections(rows.people[3], peopleById, rows.partners).map(
+      (section) => section.title,
+    ),
+    ["Parents"],
+  );
 });
 
 test("partners never enter any of the four descendant generations", () => {

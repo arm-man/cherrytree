@@ -17,6 +17,11 @@ body:has([data-theme="admin"]) {
   --accent-strong: #315b70;
   --muted: #526975;
   --highlight-soft: color-mix(in srgb, var(--highlight) 20%, var(--background));
+  background-image: radial-gradient(
+    circle at 85% 5%,
+    var(--background-glow),
+    transparent 28rem
+  );
 }
 
 html {
@@ -34,13 +39,7 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--foreground);
-  background:
-    radial-gradient(
-      circle at 85% 5%,
-      var(--background-glow),
-      transparent 28rem
-    ),
-    var(--background);
+  background-color: var(--background);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -202,14 +201,21 @@ a {
   gap: 0.5rem;
 }
 
+.root-generation {
+  padding: 0.5rem;
+  border: 1px solid var(--highlight);
+  border-radius: 1rem;
+  background: var(--background-glow);
+}
+
 .generation h2 {
   margin: 0 0 0.125rem 0.25rem;
   font-size: 18px;
   font-weight: 700;
 }
 
-/* Keep descendant column labels available to screen readers. */
-.generation:not(:first-child) thead {
+/* Keep ancestor and descendant column labels available to screen readers. */
+.generation:not(.root-generation) thead {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -281,8 +287,13 @@ td:last-child {
   font-weight: 750;
 }
 
-.partner-name .person-name-button {
+.partner-name .person-name-text {
   margin-left: 1rem;
+}
+
+.person-name-text {
+  display: inline-block;
+  padding: 0.35rem 0.4rem;
 }
 
 .person-name-button {
@@ -466,5 +477,21 @@ td.highlighted-birthday {
 
   td {
     font-size: 13px;
+  }
+
+  /* Let public tables fit their contents instead of forcing a desktop width. */
+  .page-shell:not([data-theme="admin"]) .table-scroll table {
+    min-width: 0;
+  }
+
+  .page-shell:not([data-theme="admin"]) .table-scroll th,
+  .page-shell:not([data-theme="admin"]) .table-scroll td {
+    padding-right: 0.55rem;
+    padding-left: 0.55rem;
+  }
+
+  .page-shell:not([data-theme="admin"]) .table-scroll th {
+    font-size: 12px;
+    letter-spacing: 0.045em;
   }
 }

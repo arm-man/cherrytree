@@ -217,7 +217,7 @@ Successful creation refreshes server-provided dropdown options while keeping the
 
 Public and administrative spouse behavior use the `partners` table. `people` stores Cherry Kin; legacy spouse columns remain physically present until Phase 3 but are unused by application spouse behavior.
 
-The public page loads people and partners in two bulk queries. Client display rows have an explicit cherryKin/partner discriminator, distinct entity keys and a separate navigation Cherry Kin id. An id map resolves Spouse names, and child counts and descendant groups use Cherry Kin only. The existing table and age components render both row types; see `Product.md` for inclusion and display rules.
+The public page loads people and partners in two bulk queries. Client display rows have an explicit cherryKin/partner discriminator and distinct entity keys. A Cherry Kin's navigation target is its own id; a Spouse has a null target and renders as a noninteractive name. An id map resolves Spouse names, and child counts and descendant groups use Cherry Kin only. A fixed three-step parentId walk derives ancestor sections from the same loaded rows, adding associated Spouses by ID without further queries. Root selection remains in the existing React state and drives all genealogy sections. The existing table and age components render both row types; see `Product.md` for inclusion and display rules. No schema or API change is required.
 
 ## Business Logic
 

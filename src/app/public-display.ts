@@ -30,7 +30,7 @@ export interface CherryKinRow extends PublicPerson {
 export interface PartnerRow extends PublicPartner {
   type: "partner";
   rowKey: string;
-  navigationPersonId: number;
+  navigationPersonId: null;
   spouse: string;
   childCount: number | null;
 }
@@ -61,7 +61,7 @@ export function getPublicRows(
       ...partner,
       type: "partner",
       rowKey: `partner-${partner.id}`,
-      navigationPersonId: partner.partnerId,
+      navigationPersonId: null,
       spouse: getFullName(person),
       childCount: null,
     });
@@ -98,18 +98,39 @@ export function getListRows(
 export function getParentSection(
   rootPerson: CherryKinRow | undefined,
   partners: readonly PartnerRow[],
-): { title: string; rows: PublicRow[] } {
+): { rows: PublicRow[] } {
   const spouses = rootPerson
     ? partners.filter((partner) => partner.partnerId === rootPerson.id)
     : [];
 
   return {
-    title:
-      spouses.length === 0
-        ? "Parent"
-        : spouses.length === 1
-          ? "Parents"
-          : "Parent & Spouses",
     rows: rootPerson ? [rootPerson, ...spouses] : [],
   };
+}
+
+export function getAncestorSections(
+  rootPerson: CherryKinRow | undefined,
+  peopleById: ReadonlyMap<number, CherryKinRow>,
+  partners: readonly PartnerRow[],
+): { title: string; rows: PublicRow[] }[] {
+  const sections: { title: string; rows: PublicRow[] }[] = [];
+  let person = rootPerson;
+
+  // Only Cherry Kin parent IDs advance this fixed-depth chain. Spouses are
+  // display rows, never ancestry branches; all data is already loaded.
+  for (const title of ["Parents", "Grandparents", "Great Grandparents"]) {
+    if (!person || person.parentId === null) {
+      break;
+    }
+
+    person = peopleById.get(person.parentId);
+    if (!person) {
+      break;
+    }
+
+    sections.push({ title, rows: getParentSection(person, partners).rows });
+  }
+
+  // Display the oldest ancestor generation first, ending with Parents above the Root.
+  return sections.reverse();
 }
