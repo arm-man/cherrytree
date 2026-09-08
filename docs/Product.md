@@ -57,6 +57,10 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - The Cherry Kin are shown in a single table with columns: Name, Age, Birthed, Children, Spouse. When sorted by Date of Passing, insert Passed Away immediately after Birthed.
   - Name is the Full Name.
   - Birthed displays the Cherry Kin's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
+- Only in List View, the NAME, AGE, BIRTHED, CHILDREN and SPOUSE column headings are buttons that select the existing Sort dropdown option using these exact mappings: NAME → First Name, AGE → Age, BIRTHED → Birthday, CHILDREN → # of Children, SPOUSE → Spouse.
+  - Reuse the dropdown's existing Sort state, event handler and sorting logic. The dropdown immediately displays the selected option, with exactly the same ordering, filtering and remembered List Sort behavior as selecting it manually. Repeated header activation keeps that same sort; it never toggles direction or introduces separate sorting behavior.
+  - Make these headings visibly interactive with an underline and pointer cursor. Support keyboard activation with Enter and Space and retain a visible focus indicator.
+  - Passed Away and all Genealogy headings remain noninteractive. NAME selects First Name even though the column displays Full Name.
 - When the Sort option is Upcoming Birthday, ignore the year and sort each Cherry Kin by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include Cherry Kin with a Death Day in the Upcoming Birthday list.
 - When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
 - When the Sort option is Age, sort numerically descending by the same calculated integer Age shown in the Age column, from oldest to youngest.

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useSyncExternalStore } from "react";
+import type { ReactNode } from "react";
 import { DeceasedAge } from "./DeceasedAge";
 import { PersonPhone } from "./PersonPhone";
 
@@ -51,6 +52,7 @@ interface PersonTableProps {
   isBirthdayHighlighted?: (person: PublicRow) => boolean;
   isRowHighlighted?: (person: PublicRow) => boolean;
   onPersonNameClick: (personId: number) => void;
+  onSortChange?: (sortOption: SortOption) => void;
 }
 
 type View = "genealogy" | "list";
@@ -124,9 +126,28 @@ function PersonTable({
   isBirthdayHighlighted,
   isRowHighlighted,
   onPersonNameClick,
+  onSortChange,
 }: PersonTableProps) {
   const columnCount =
     4 + Number(showChildren) + Number(showParent) + Number(showPassedAway);
+
+  function renderColumnTitle(title: string, sortOption: SortOption): ReactNode {
+    // Only the List table receives the existing dropdown's sort handler.
+    if (!onSortChange) {
+      return title;
+    }
+
+    return (
+      <button
+        type="button"
+        className="column-sort-button"
+        title={`Sort by ${sortOption === "Children" ? "# of Children" : sortOption}`}
+        onClick={() => onSortChange(sortOption)}
+      >
+        {title}
+      </button>
+    );
+  }
 
   return (
     <div className="table-scroll">
@@ -136,13 +157,15 @@ function PersonTable({
       >
         <thead>
           <tr>
-            <th scope="col">Name</th>
+            <th scope="col">{renderColumnTitle("Name", "First Name")}</th>
             {showParent ? <th scope="col">Parent</th> : null}
-            <th scope="col">Age</th>
-            <th scope="col">Birthed</th>
+            <th scope="col">{renderColumnTitle("Age", "Age")}</th>
+            <th scope="col">{renderColumnTitle("Birthed", "Birthday")}</th>
             {showPassedAway ? <th scope="col">Passed Away</th> : null}
-            {showChildren ? <th scope="col">Children</th> : null}
-            <th scope="col">Spouse</th>
+            {showChildren ? (
+              <th scope="col">{renderColumnTitle("Children", "Children")}</th>
+            ) : null}
+            <th scope="col">{renderColumnTitle("Spouse", "Spouse")}</th>
           </tr>
         </thead>
         <tbody>
@@ -384,6 +407,7 @@ export function PersonList({
       {view === "list" ? (
         <PersonTable
           ariaLabel="People"
+          onSortChange={handleSortChange}
           people={listPeople}
           peopleById={peopleById}
           showChildren

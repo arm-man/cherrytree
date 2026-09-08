@@ -276,6 +276,30 @@ th {
   text-transform: uppercase;
 }
 
+.column-sort-button {
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0.15rem;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.column-sort-button:hover {
+  text-decoration-thickness: 2px;
+}
+
+.column-sort-button:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
 td {
   height: 31px;
   padding-top: 0;
