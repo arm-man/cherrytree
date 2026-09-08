@@ -61,7 +61,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
 - When the Sort option is Date of Passing, omit Cherry Kin and Spouse entries whose Death Day is NULL. The order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
   - Show the additional column PASSED AWAY immediately after BIRTHED, displaying each Cherry Kin or Spouse's own Death Day in the same full English month format as Birthday, e.g. March 14, 2008. Hide this column for all other sorts.
-  - Keep the Spouse column visible with the additional date column: use compact cell spacing and allow text to wrap to fit the table width.
+  - Use compact cell spacing while keeping names, dates, ages, and column headings on one line. Allow horizontal scrolling within the table when needed to reach the Spouse column; do not split words or force the six columns to fit the viewport.
 - When the Sort option is Spouse, sort alphabetically. Ignore the fact that the name may contain a first or last name, simply order the text data alphabetically.
 - When the Sort option is Children, sort descending.
   - A sole Spouse uses the associated Cherry Kin's Children count, including 0, and sorts normally. Spouses in multiple-spouse relationships have blank Children, sorted after all numeric counts.

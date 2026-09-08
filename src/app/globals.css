@@ -259,13 +259,11 @@ td {
   min-width: 0;
 }
 
-/* Fit the extra date column while keeping spouse names in view. */
+/* Keep spacing compact; scroll the table rather than splitting names or dates. */
 .passing-table th,
 .passing-table td {
   padding-right: 0.55rem;
   padding-left: 0.55rem;
-  white-space: normal;
-  overflow-wrap: anywhere;
 }
 
 th {
