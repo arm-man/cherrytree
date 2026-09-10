@@ -10,9 +10,10 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - **View**: one of Genealogy or List.
 - **Genealogy** : The View showing up to three ancestor generations, the Root Cherry Kin group, and Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren, each as their own table.
 - **Root Cherry Kin** : The selected Cherry Kin whose Spouses, ancestors, and descendants are displayed in Genealogy View.
-- **List** : The View in which all Cherry Kin and all Spouses are shown in a table.
+- **List** : The View in which all Cherry Kin, Spouses, and Ancestors are shown in a table.
 - **Cherry Kin** : A member of the Cherry family genealogy. Cherry Kin form the genealogy hierarchy and may have descendants.
 - **Spouse** : A spouse or partner associated with a Cherry Kin. Spouses are family information but are not part of the genealogy hierarchy and do not affect Generations.
+- **Ancestor** : An independent record from `ancestors`, included in List View and administration only. Its Spouse is plain text, not a relationship. This entity is separate from the ancestor generations derived from Cherry Kin parents in Genealogy View.
 - **Full Name** : The concatenation of the First Name with the Last Name.
 - **Generation** : One of Root Cherry Kin, Parents, Grandparents, Great Grandparents, Children, Grandchildren, Great Grandchildren, or Great Great Grandchildren.
 - **Control** : The View, Sort, or Search controls.
@@ -54,7 +55,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 ## List View
 
 - No phone icon, phone number, or Copy/Call controls appear in List View.
-- The Cherry Kin are shown in a single table with columns: Name, Age, Birthed, Children, Spouse. When sorted by Date of Passing, insert Passed Away immediately after Birthed.
+- Cherry Kin, Spouses, and Ancestors are shown in a single table with columns: Name, Age, Birthed, Children, Spouse. When sorted by Date of Passing, insert Passed Away immediately after Birthed.
   - Name is the Full Name.
   - Birthed displays the Cherry Kin's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
 - Only in List View, the NAME, AGE, BIRTHED, CHILDREN and SPOUSE column headings are buttons that select the existing Sort dropdown option using these exact mappings: NAME → First Name, AGE → Age, BIRTHED → Birthday, CHILDREN → # of Children, SPOUSE → Spouse.
@@ -64,11 +65,11 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - When the Sort option is Upcoming Birthday, ignore the year and sort each Cherry Kin by the next occurrence of their birthday relative to today's date, including today. Birthdays wrap across calendar years. Any birthday within the next 7 days (today and the next 6 days) will be highlighted. Include Cherry Kin with a Death Day in the Upcoming Birthday list.
 - When the Sort option is Birthday, the order includes the year and is sorted ascending so that the oldest person is listed first, youngest person is listed last.
 - When the Sort option is Age, sort numerically descending by the same calculated integer Age shown in the Age column, from oldest to youngest.
-  - For living Cherry Kin and Spouses, use completed years from their own Birthday through today's local calendar date. For deceased Cherry Kin and Spouses, use completed years from their own Birthday through their own Death Day.
-  - Reuse the existing Age-calculation logic used for display so displayed and sorted ages cannot diverge. Living and deceased entries and both row types participate together, without separate groups.
+  - For living Cherry Kin, Spouses, and Ancestors, use completed years from their own Birthday through today's local calendar date. For deceased Cherry Kin, Spouses, and Ancestors, use completed years from their own Birthday through their own Death Day.
+  - Reuse the existing Age-calculation logic used for display so displayed and sorted ages cannot diverge. Living and deceased entries and all three row types participate together, without separate groups.
   - Entries whose Age cannot be calculated always appear at the bottom. For equal calculated Ages, use Birthday ascending (older Birthday first) as the secondary sort. Remaining ties may retain the existing row order.
-- When the Sort option is Date of Passing, omit Cherry Kin and Spouse entries whose Death Day is NULL. The order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
-  - Show the additional column PASSED AWAY immediately after BIRTHED, displaying each Cherry Kin or Spouse's own Death Day in the same full English month format as Birthday, e.g. March 14, 2008. Hide this column for all other sorts.
+- When the Sort option is Date of Passing, omit Cherry Kin, Spouse, and Ancestor entries whose Death Day is NULL. The order includes the year and is sorted ascending so that the person who died first is listed first, and the most recently deceased is listed last.
+  - Show the additional column PASSED AWAY immediately after BIRTHED, displaying each entry's own Death Day in the same full English month format as Birthday, e.g. March 14, 2008. Hide this column for all other sorts.
   - Use compact cell spacing while keeping names, dates, ages, and column headings on one line. Allow horizontal scrolling within the table when needed to reach the Spouse column; do not split words or force the six columns to fit the viewport.
 - When the Sort option is Spouse, sort alphabetically. Ignore the fact that the name may contain a first or last name, simply order the text data alphabetically.
 - When the Sort option is # of Children, sort descending.
@@ -83,13 +84,21 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 ### Public Spouse Records
 
 - Public Spouse information comes exclusively from `partners`, associated through `partners.partner_id = people.id`. Each record is independent; duplicate names are allowed and are never matched or deduplicated by name.
-- Every Cherry Kin and every Spouse produces exactly one List row, including Spouses without Birthdays. With Search empty, the List row count equals the number of people rows plus the number of partners rows, except when sorted by Date of Passing, which includes only entries with a non-NULL Death Day.
+- Every Cherry Kin, Spouse, and Ancestor produces exactly one List row, including Spouses without Birthdays. With Search empty, the List row count equals the number of people rows plus partners rows plus ancestors rows, except when sorted by Date of Passing, which includes only entries with a non-NULL Death Day.
 - Spouse rows use their own First Name, Last Name, Birthday and Death Day. Age, deceased indicators and death-detail popups use the same calculations and presentation as Cherry Kin. Missing Birthday leaves Age and Birthed blank.
 - A Spouse row's Spouse column shows the associated Cherry Kin Full Name. If its partner_id occurs exactly once in partners, its Children equals the associated Cherry Kin's child count, including 0. Otherwise Children is blank. Count all partner records regardless of Birthday or Search; this display rule does not add partners to genealogy or child-count calculations. Spouse rows never have telephone icons or inherit Cherry Kin phone numbers.
 - Spouse names and rows are non-clickable throughout public Genealogy and List Views, including the Root group and all ancestry sections. Render names as plain text with no click handler, pointer cursor, link styling, or selection hover effect. Spouses never select a Root Cherry Kin. Their existing Age detail controls remain available.
 - A Cherry Kin's Spouse column shows all associated Spouse Full Names, separated by commas, including those without Birthdays.
-- Both row types use the List sorting rules above, including Age, and case-insensitive, trimmed partial search against Full Name OR Spouse only. Age and Birthed are not searched. There is no sort-direction control. Blank Birthdays sort after real dates.
+- All three row types use the List sorting rules above, including Age, and case-insensitive, trimmed partial search against Full Name OR Spouse only. Age and Birthed are not searched. There is no sort-direction control. Blank Birthdays sort after real dates.
 - The application requires no legacy spouse columns in `people`. Their removal is managed externally; Phase 3 cleanup does not change database, migration or seed files.
+
+### Public Ancestor Records
+
+- Include every row from `ancestors` in List View using the same table, row styling, date formatting, Age calculation, dagger and death-date hover/tap popup as Cherry Kin and Spouses.
+- Name is First Name plus Last Name; Birthed is Birthday. Children is always blank/null, including for sorting; Spouse is the stored plain text, or blank for NULL.
+- Names and rows are noninteractive, with the same plain-name presentation as Spouses. Ancestors cannot select the Root Cherry Kin; deceased Age detail controls remain available.
+- Apply every existing List sort, including Upcoming Birthday and Date of Passing, and the existing blank-at-bottom rules. Public search remains a trimmed, case-insensitive partial match against Full Name OR Spouse only; Birthday and Age are not searched for any entity.
+- Ancestors do not appear in Genealogy View or affect its relationships, child counts, Root selection, or ancestry sections. Keep combined-list identity qualified by entity type because numeric IDs can overlap across all three tables.
 
 ## Genealogy View
 
@@ -143,16 +152,16 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 - Admin pages use #E8F1F5 as the main background color and #5B8FA8 as the secondary/highlight color to distinguish them from regular pages.
 - The initial administration feature is part of the same Cherry Tree application and is available without authentication. Administrator authentication may be added later.
-- The Cherry Kin & Spouses list is available at `/admin/people`.
-  - Load Cherry Kin from people and Spouses from partners, combined and sorted alphabetically by Full Name.
+- The Cherry Kin, Spouses & Ancestors list is available at `/admin/people`.
+  - Load Cherry Kin from people, Spouses from partners, and Ancestors from ancestors, combined and sorted alphabetically by Full Name.
   - Each entry is clickable with columns in exactly this order: Full Name, Birthday, Death Day, Parent's Full Name, Phone Number, Spouse.
   - Cherry Kin rows retain their name, dates, Parent and Phone Number, with blank Spouse. Spouse rows display their own name and optional dates, blank Parent and Phone Number, and the associated Cherry Kin Full Name in Spouse.
-  - Both row types use the same table and row colors.
+  - All three row types use the same table and row colors. Ancestor rows show their name, dates, and plain-text Spouse, with blank Parent and Phone Number.
   - Use compact table text and cell spacing, with more available width on large screens, to minimize horizontal scrolling. Use slightly larger text with dense rows and minimal vertical gaps to show more names at once. Long names and column headings may wrap; dates and phone numbers stay on one line. Keep every value fully accessible, name links at least 24 pixels tall, and horizontal scrolling where needed.
   - All null optional values remain blank. The single top-level Cherry Kin's Parent remains blank. Admin date displays, including Parent options, use abbreviated English months, e.g. Dec 14, 1975; public date formatting is unchanged.
   - A Search text box filters the list immediately using a case-insensitive partial-text match against all six displayed fields, including formatted dates and phone numbers. Hidden legacy fields are never searched.
-  - A Type dropdown next to Search offers All (default), Cherry Kin, and Spouses. Search and Type combine with AND logic. Leading and trailing whitespace in the Search text is ignored.
-  - If Search produces no results, display "No Cherry Kin or Spouses found."
+  - A Type dropdown next to Search offers All (default), Cherry Kin, Spouse, and Ancestor. Search and Type combine with AND logic. Leading and trailing whitespace in the Search text is ignored.
+  - If Search produces no results, display "No Cherry Kin, Spouses or Ancestors found."
   - Preserve Search and Type when returning from any Add or Edit form.
   - An Add Cherry Kin button navigates to `/admin/people/new`.
   - Clicking a Cherry Kin navigates to `/admin/people/[id]/edit` for that Cherry Kin.
@@ -185,7 +194,15 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Spouse is a dropdown of Cherry Kin from people only whose Age is at least 16, alphabetized by Full Name. Age uses today's local calendar date for living Cherry Kin and Death Day for deceased Cherry Kin, including the sixteenth birthday. Each option displays Full Name and Birthday using the same abbreviated date format as the Parent dropdown, e.g. Candee Arant — Dec 14, 1975. It stores people.id in partners.partner_id. Edit selects the current association when eligible and permits changing it; if the existing association is under 16, select an eligible Cherry Kin before saving.
 - Birthday cannot be future. Death Day requires Birthday, must be on or after it, and cannot be future. Equal dates are allowed. Validate on client and server with clear errors.
 - Use the Cherry Kin form layout and error/pending conventions, one Save button, and Cancel/Return. Successful creation clears the form, stays on Add Spouse, refreshes options, and identifies the Spouse added. Successful editing returns to the list. Unchanged edits display "No changes were made." Cancel/Return leaves without saving.
-- Neither entity supports deletion in the UI or API.
+- None of the three entities supports deletion in the UI or API.
+
+### Ancestor Forms
+
+- Add Ancestor appears alongside the existing add controls and opens /admin/ancestors/new. An Ancestor row opens /admin/ancestors/[id]/edit using its own ancestors.id.
+- Fields, in order: First Name, Last Name, Birthday, Death Day, Spouse. Names and Birthday are required; Death Day and plain-text Spouse are optional. Do not show Parent, Phone Number, or association dropdowns.
+- Trim names and Spouse; blank optional values become NULL and may be cleared on edit. Birthday must be a valid date and not future. Death Day must be a valid date on or after Birthday and not future; equal dates are allowed. Reuse the existing date inputs, client/server validation conventions, pending protection, error display, and admin styling.
+- Successful creation or editing returns to the freshly loaded admin list, preserving Search and Type. Cancel/Return leaves without saving. Unchanged edits stay on the form with "No changes were made." Existing Cherry Kin and Spouse creation behavior remains unchanged.
+- Each successful Ancestor creation or edit writes an informational message to logs identifying the action, Ancestor ID, and Full Name, in the same transaction as the save.
 
 ## Mobile Requirements
 

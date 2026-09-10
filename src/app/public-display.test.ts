@@ -14,7 +14,11 @@ import {
   getParentSection,
   getPublicRows,
 } from "./public-display.ts";
-import type { PublicPartner, PublicPerson } from "./public-display.ts";
+import type {
+  PublicAncestor,
+  PublicPartner,
+  PublicPerson,
+} from "./public-display.ts";
 
 const people: PublicPerson[] = [
   {
@@ -479,4 +483,109 @@ test("partner death dates and birthdays feed the existing age and popup calculat
   );
   assert.equal(calculateAge(partner.birthday, "2026-12-30"), 88);
   assert.equal(partner.deathday, "2010-03-01");
+});
+
+test("Ancestors share every List sort and search without becoming genealogy records", () => {
+  const sourcePeople: PublicPerson[] = [
+    {
+      id: 10,
+      parentId: null,
+      firstName: "Cara",
+      lastName: "Kin",
+      birthday: "1950-01-01",
+      deathday: null,
+      phoneNumber: null,
+    },
+  ];
+  const sourcePartners: PublicPartner[] = [
+    {
+      id: 10,
+      partnerId: 10,
+      firstName: "Ben",
+      lastName: "Partner",
+      birthday: "1940-06-01",
+      deathday: "2000-06-01",
+    },
+  ];
+  const ancestors: PublicAncestor[] = [
+    {
+      id: 10,
+      firstName: "Ada",
+      lastName: "Elder",
+      birthday: "1900-09-10",
+      deathday: "1990-09-10",
+      spouse: "Zoe Text",
+    },
+    {
+      id: 11,
+      firstName: "Dan",
+      lastName: "Elder",
+      birthday: "1956-12-01",
+      deathday: null,
+      spouse: null,
+    },
+  ];
+  const { people: kin, partners: spouses } = getPublicRows(
+    sourcePeople,
+    sourcePartners,
+  );
+  const rows = getListRows(kin, spouses, ancestors);
+  assert.equal(new Set(rows.map((row) => row.rowKey)).size, 4);
+  assert.deepEqual(
+    rows
+      .filter((row) => row.type === "ancestor")
+      .map((row) => [row.childCount, row.navigationPersonId]),
+    [
+      [null, null],
+      [null, null],
+    ],
+  );
+  assert.deepEqual(getParentSection(kin[0], spouses).rows, [
+    ...kin,
+    ...spouses,
+  ]);
+  assert.deepEqual(
+    getAncestorSections(kin[0], new Map([[10, kin[0]]]), spouses),
+    [],
+  );
+  assert.equal(getGenealogyGenerations(kin, 10).children.length, 0);
+  assert.deepEqual(
+    filterPeopleBySearch(rows, "  ADA ELDER ").map((row) => row.rowKey),
+    ["ancestor-10"],
+  );
+  assert.deepEqual(
+    filterPeopleBySearch(rows, " zoe ").map((row) => row.rowKey),
+    ["ancestor-10"],
+  );
+  assert.deepEqual(filterPeopleBySearch(rows, "1900"), []);
+  assert.deepEqual(filterPeopleBySearch(rows, "90"), []);
+
+  const expected = {
+    Birthday: ["ancestor-10", "partner-10", "person-10", "ancestor-11"],
+    Age: ["ancestor-10", "person-10", "ancestor-11", "partner-10"],
+    "Upcoming Birthday": [
+      "ancestor-10",
+      "ancestor-11",
+      "person-10",
+      "partner-10",
+    ],
+    "Death Day": ["ancestor-10", "partner-10"],
+    "First Name": ["ancestor-10", "partner-10", "person-10", "ancestor-11"],
+    "Last Name": ["ancestor-10", "ancestor-11", "person-10", "partner-10"],
+    Spouse: ["person-10", "partner-10", "ancestor-10", "ancestor-11"],
+    Children: ["partner-10", "person-10", "ancestor-10", "ancestor-11"],
+  };
+  for (const sort of SORT_OPTIONS) {
+    assert.deepEqual(
+      sortPeople(rows, sort, "2026-09-10").map((row) => row.rowKey),
+      expected[sort],
+      sort,
+    );
+  }
+  assert.equal(
+    formatAge(ancestors[0].birthday, ancestors[0].deathday, "2026-09-10"),
+    "90 †",
+  );
+  assert.equal(calculateAge(ancestors[0].birthday, "2026-09-10"), 126);
+  assert.equal(formatAge(ancestors[1].birthday, null, "2026-09-10"), "69");
 });

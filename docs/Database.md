@@ -72,6 +72,21 @@ partners_partner_id_fkey references people(id) ON DELETE CASCADE. partners_death
 
 The table already exists and migration files are managed externally. Public spouse behavior reads `partners`; administrative spouse behavior reads and writes `partners`. Phase 3 removes remaining application references to legacy spouse columns on `people`. Removal of those columns and their date constraint is managed externally; database, migration and seed files are unchanged by this cleanup.
 
+### `ancestors`
+
+Stores independent Ancestor records for public List View and administration.
+
+| Column | Type | Null | Purpose |
+| --- | --- | --- | --- |
+| id | integer identity | No | Primary key, GENERATED ALWAYS. |
+| first_name | text | No | First name. |
+| last_name | text | No | Last name. |
+| birthday | date | No | Birth date. |
+| deathday | date | Yes | Death date. |
+| spouse | text | Yes | Plain-text Spouse; no foreign key or row association. |
+
+There are no parent, phone-number, or created_at columns. IDs are unique only within this table; combined lists must qualify IDs with the entity type. The application assumes the table already exists as defined in 007_migration_ancestors.sql and does not apply or change migrations or seeds for this feature.
+
 ### `logs`
 
 Stores server-side error, warning, and informational messages for operational troubleshooting.
@@ -111,6 +126,8 @@ No distributed locking or idempotency-key mechanism is required for the expected
 Administrative transactions acquire a PostgreSQL `SHARE ROW EXCLUSIVE` lock on `people` before reading. This serializes writers so validation and the resulting write use a consistent parent graph, while ordinary page reads remain available. The transaction uses UTC for authoritative current-date validation and releases its client after commit or rollback.
 
 Spouse saves reuse the short admin transaction and people writer lock. Read Cherry Kin to validate the association, verify the partners row exists on edit, reject unchanged edits, validate fields/dates, write only partners, and add an informational log before commit. The selected people.id must exist. Birthday is optional; Death Day requires Birthday. Other date rules match Product.md.
+
+Ancestor saves reuse the same admin transaction and writer lock. On edit, verify existence and reject unchanged values; validate required names/Birthday and optional Death Day/Spouse, then write only ancestors. Add one info log ("Added Ancestor" or "Edited Ancestor", ID and Full Name) through the existing log helper before commit. The write and log are atomic; validation failures and unchanged edits do not produce a success log. No people or partners rows are modified.
 
 ## Indexes
 

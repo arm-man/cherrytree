@@ -29,6 +29,7 @@ import {
 } from "./public-display";
 import type {
   CherryKinRow,
+  PublicAncestor,
   PublicPartner,
   PublicPerson,
   PublicRow,
@@ -37,6 +38,7 @@ import type {
 interface PersonListProps {
   people: PublicPerson[];
   partners: PublicPartner[];
+  ancestors: PublicAncestor[];
 }
 
 interface PersonTableProps {
@@ -178,7 +180,7 @@ function PersonTable({
           ) : (
             people.map((person) => {
               const parent =
-                person.type === "partner" || person.parentId === null
+                person.type !== "cherryKin" || person.parentId === null
                   ? undefined
                   : peopleById.get(person.parentId);
 
@@ -272,6 +274,7 @@ function PersonTable({
 export function PersonList({
   people: sourcePeople,
   partners: sourcePartners,
+  ancestors,
 }: PersonListProps) {
   const { people, partners } = getPublicRows(sourcePeople, sourcePartners);
   const [view, setView] = useState<View>("genealogy");
@@ -295,7 +298,7 @@ export function PersonList({
   );
   const generations = getGenealogyGenerations(people, rootPersonId);
   const filteredPeople = filterPeopleBySearch(
-    getListRows(people, partners),
+    getListRows(people, partners, ancestors),
     searchText,
   );
   const listPeople = today

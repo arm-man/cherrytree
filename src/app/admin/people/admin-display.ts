@@ -18,15 +18,17 @@ export function formatAdminDate(value: string | null): string {
   return `${months[month - 1]} ${day}, ${year}`;
 }
 
-export type AdminRowFilter = "all" | "cherryKin" | "spouse";
+export type AdminRowFilter = "all" | "cherryKin" | "spouse" | "ancestor";
 
 export function parseAdminRowFilter(value: unknown): AdminRowFilter {
-  return value === "cherryKin" || value === "spouse" ? value : "all";
+  return value === "cherryKin" || value === "spouse" || value === "ancestor"
+    ? value
+    : "all";
 }
 
 export interface AdminListRow {
   id: number;
-  type: "cherryKin" | "spouse";
+  type: "cherryKin" | "spouse" | "ancestor";
   fullName: string;
   birthday: string;
   deathday: string;

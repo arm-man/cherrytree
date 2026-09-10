@@ -203,21 +203,22 @@ The initial administration feature intentionally has no authentication or author
 
 Use these pages:
 
-- /admin/people for Cherry Kin & Spouses.
+- /admin/people for Cherry Kin, Spouses & Ancestors.
 - /admin/people/new and /admin/people/[id]/edit for Add/Edit Cherry Kin.
 - /admin/partners/new and /admin/partners/[id]/edit for Add/Edit Spouse.
+- /admin/ancestors/new and /admin/ancestors/[id]/edit for Add/Edit Ancestor.
 
-Server Components load administrative data; focused Client Components handle local filtering, forms, validation and ordinary HTTP mutation requests. Partners pages reuse the existing admin layout and styles.
+Server Components load administrative data; focused Client Components handle local filtering, forms, validation and ordinary HTTP mutation requests. Partners and Ancestors pages reuse the existing admin layout and styles.
 
-Administrative Cherry Kin and Spouse reads use separate data shapes. The combined list uses a display model with an explicit cherryKin/spouse discriminator, entity id, and six formatted display fields. Two bulk queries plus a name map resolve parents and associated Cherry Kin without N+1 queries.
+Administrative Cherry Kin, Spouse, and Ancestor reads use separate data shapes. The combined list uses a display model with an explicit cherryKin/spouse/ancestor discriminator, entity id, and six formatted display fields. Three bulk queries plus a name map resolve parents and associated Cherry Kin without N+1 queries.
 
-The search and type URL parameters preserve both controls across refreshes and form navigation. Type values are all (default, omitted from URLs), cherryKin and spouse; unknown values become all. Use window.history.replaceState so typing or switching Type filters the loaded rows locally without API/database requests or history entries per keystroke. Search and Type combine with AND logic. Returning from forms loads fresh server data and reapplies both controls.
+The search and type URL parameters preserve both controls across refreshes and form navigation. Type values are all (default, omitted from URLs), cherryKin, spouse and ancestor; unknown values become all. Use window.history.replaceState so typing or switching Type filters the loaded rows locally without API/database requests or history entries per keystroke. Search and Type combine with AND logic. Returning from forms loads fresh server data and reapplies both controls.
 
-Successful creation refreshes server-provided dropdown options while keeping the cleared form and confirmation visible. Successful editing navigates to the list with a fresh server read. Parent eligibility remains authoritative on the server; Spouse options contain only Cherry Kin. No deletion is supported.
+Successful Cherry Kin or Spouse creation refreshes server-provided dropdown options while keeping the cleared form and confirmation visible. Successful editing and Ancestor creation navigate to the list with a fresh server read. Parent eligibility remains authoritative on the server; Spouse options contain only Cherry Kin. No deletion is supported.
 
 Public and administrative spouse behavior use the `partners` table exclusively. `people` stores Cherry Kin; application queries and models require no legacy spouse columns.
 
-The public page loads people and partners in two bulk queries. Client display rows have an explicit cherryKin/partner discriminator and distinct entity keys. A Cherry Kin's navigation target is its own id; a Spouse has a null target and renders as a noninteractive name. An id map resolves Spouse names, and child counts and descendant groups use Cherry Kin only. A fixed three-step parentId walk derives ancestor sections from the same loaded rows, adding associated Spouses by ID without further queries. Root selection remains in the existing React state and drives all genealogy sections. The existing table and age components render both row types; see `Product.md` for inclusion and display rules. No schema or API change is required.
+The public page loads people, partners, and ancestors in three bulk queries. The Ancestor query is shared with admin because its six stored fields are also exactly the public fields required by List View. Client display rows have an explicit cherryKin/partner/ancestor discriminator and distinct entity keys. A Cherry Kin's navigation target is its own id; Spouses and Ancestors have null targets and render as noninteractive names. Ancestors are appended only by the List row builder and never enter the Cherry Kin relationship map. Their Children value is null and Spouse is plain text. An id map resolves Spouse names, and child counts and descendant groups use Cherry Kin only. A fixed three-step parentId walk derives ancestor sections from the same loaded rows, adding associated Spouses by ID without further queries. Root selection remains in the existing React state and drives all genealogy sections. The existing table and age components render all three row types; see `Product.md` for inclusion and display rules. The ancestors table is assumed present; the Ancestor mutation contracts are defined in API.md.
 
 ## Business Logic
 

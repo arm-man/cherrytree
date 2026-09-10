@@ -27,7 +27,17 @@ const spouse: AdminListRow = {
   phoneNumber: "",
   spouseName: "Candee Arant",
 };
-const rows = [kin, spouse];
+const ancestor: AdminListRow = {
+  id: 1,
+  type: "ancestor",
+  fullName: "Ada Elder",
+  birthday: "Sep 10, 1900",
+  deathday: "Sep 10, 1990",
+  parentName: "",
+  phoneNumber: "",
+  spouseName: "Sam Elder",
+};
+const rows = [kin, spouse, ancestor];
 
 test("All is the default and each type combines with trimmed case-insensitive search", () => {
   for (const value of [null, undefined, "", "invalid", ["spouse"]])
@@ -35,6 +45,10 @@ test("All is the default and each type combines with trimmed case-insensitive se
   assert.deepEqual(filterAdminRows(rows, "", "all"), rows);
   assert.deepEqual(filterAdminRows(rows, "", "cherryKin"), [kin]);
   assert.deepEqual(filterAdminRows(rows, "", "spouse"), [spouse]);
+  assert.equal(parseAdminRowFilter("ancestor"), "ancestor");
+  assert.deepEqual(filterAdminRows(rows, "", "ancestor"), [ancestor]);
+  assert.deepEqual(filterAdminRows(rows, "  SAM  ", "ancestor"), [ancestor]);
+  assert.deepEqual(filterAdminRows(rows, "Ada", "spouse"), []);
   assert.deepEqual(filterAdminRows(rows, "  ARANT  ", "spouse"), [spouse]);
   assert.deepEqual(filterAdminRows(rows, "Herschel", "cherryKin"), []);
 });
@@ -60,4 +74,8 @@ test("admin navigation preserves both filters and safely encodes search text", (
     "/admin/partners/1/edit?search=Arant+%26+Cherry&type=spouse",
   );
   assert.equal(adminPeopleUrl("/admin/people", "", "all"), "/admin/people");
+  assert.equal(
+    adminPeopleUrl("/admin/ancestors/1/edit", "Ada & Sam", "ancestor"),
+    "/admin/ancestors/1/edit?search=Ada+%26+Sam&type=ancestor",
+  );
 });

@@ -20,7 +20,7 @@ export function AdminPeopleList({ rows }: { rows: AdminListRow[] }) {
   return (
     <>
       <div className={styles.heading}>
-        <h1>Cherry Kin &amp; Spouses</h1>
+        <h1>Cherry Kin, Spouses &amp; Ancestors</h1>
         <div className={styles.actions}>
           <Link
             className={styles.primary}
@@ -35,6 +35,13 @@ export function AdminPeopleList({ rows }: { rows: AdminListRow[] }) {
             prefetch={false}
           >
             Add Spouse
+          </Link>
+          <Link
+            className={styles.primary}
+            href={adminPeopleUrl("/admin/ancestors/new", search, type)}
+            prefetch={false}
+          >
+            Add Ancestor
           </Link>
         </div>
       </div>
@@ -74,14 +81,15 @@ export function AdminPeopleList({ rows }: { rows: AdminListRow[] }) {
           >
             <option value="all">All</option>
             <option value="cherryKin">Cherry Kin</option>
-            <option value="spouse">Spouses</option>
+            <option value="spouse">Spouse</option>
+            <option value="ancestor">Ancestor</option>
           </select>
         </div>
       </div>
       <div
         className="table-scroll"
         role="region"
-        aria-label="Cherry Kin & Spouses"
+        aria-label="Cherry Kin, Spouses & Ancestors"
         tabIndex={0}
       >
         <table className={styles.table}>
@@ -104,7 +112,7 @@ export function AdminPeopleList({ rows }: { rows: AdminListRow[] }) {
           <tbody>
             {matches.map((person) => {
               const href = adminPeopleUrl(
-                `/admin/${person.type === "cherryKin" ? "people" : "partners"}/${person.id}/edit`,
+                `/admin/${person.type === "cherryKin" ? "people" : person.type === "spouse" ? "partners" : "ancestors"}/${person.id}/edit`,
                 search,
                 type,
               );
@@ -139,7 +147,7 @@ export function AdminPeopleList({ rows }: { rows: AdminListRow[] }) {
       </div>
       <p role="status" className={styles.listStatus}>
         {matches.length === 0
-          ? "No Cherry Kin or Spouses found."
+          ? "No Cherry Kin, Spouses or Ancestors found."
           : `${matches.length} ${matches.length === 1 ? "record" : "records"}`}
       </p>
     </>

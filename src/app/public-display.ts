@@ -19,6 +19,22 @@ export interface PublicPartner {
   deathday: string | null;
 }
 
+export interface PublicAncestor {
+  id: number;
+  firstName: string;
+  lastName: string;
+  birthday: string;
+  deathday: string | null;
+  spouse: string | null;
+}
+
+export interface AncestorRow extends PublicAncestor {
+  type: "ancestor";
+  rowKey: string;
+  navigationPersonId: null;
+  childCount: null;
+}
+
 export interface CherryKinRow extends PublicPerson {
   type: "cherryKin";
   rowKey: string;
@@ -35,7 +51,7 @@ export interface PartnerRow extends PublicPartner {
   childCount: number | null;
 }
 
-export type PublicRow = CherryKinRow | PartnerRow;
+export type PublicRow = CherryKinRow | PartnerRow | AncestorRow;
 
 export function getPublicRows(
   people: readonly PublicPerson[],
@@ -91,8 +107,17 @@ export function getPublicRows(
 export function getListRows(
   people: readonly CherryKinRow[],
   partners: readonly PartnerRow[],
+  ancestors: readonly PublicAncestor[] = [],
 ): PublicRow[] {
-  return [...people, ...partners];
+  // Independent records belong only to List View, never to genealogy relationships.
+  const ancestorRows: AncestorRow[] = ancestors.map((ancestor) => ({
+    ...ancestor,
+    type: "ancestor",
+    rowKey: `ancestor-${ancestor.id}`,
+    navigationPersonId: null,
+    childCount: null,
+  }));
+  return [...people, ...partners, ...ancestorRows];
 }
 
 export function getParentSection(

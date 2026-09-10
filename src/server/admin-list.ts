@@ -6,12 +6,14 @@ import { formatPhoneNumber } from "@/app/admin/people/phone-number";
 import { getFullName } from "@/app/admin/people/person-validation";
 import { getAdminPeople } from "./admin-people";
 import { getAdminPartners } from "./admin-partners";
+import { getAdminAncestors } from "./admin-ancestors";
 
 export async function getAdminList(): Promise<AdminListRow[]> {
-  // Two bulk reads and a name map resolve both relationships without N+1 queries.
-  const [people, partners] = await Promise.all([
+  // Three bulk reads and a name map resolve both relationships without N+1 queries.
+  const [people, partners, ancestors] = await Promise.all([
     getAdminPeople(),
     getAdminPartners(),
+    getAdminAncestors(),
   ]);
   const names = new Map(
     people.map((person) => [person.id, getFullName(person)]),
@@ -36,6 +38,18 @@ export async function getAdminList(): Promise<AdminListRow[]> {
       parentName: "",
       phoneNumber: "",
       spouseName: names.get(partner.partnerId) ?? "",
+    });
+  }
+  for (const ancestor of ancestors) {
+    rows.push({
+      id: ancestor.id,
+      type: "ancestor",
+      fullName: getFullName(ancestor),
+      birthday: formatAdminDate(ancestor.birthday),
+      deathday: formatAdminDate(ancestor.deathday),
+      parentName: "",
+      phoneNumber: "",
+      spouseName: ancestor.spouse ?? "",
     });
   }
   return rows.sort((a, b) =>
