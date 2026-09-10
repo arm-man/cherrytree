@@ -70,7 +70,7 @@ Stores one Spouse per row, separate from people.
 
 partners_partner_id_fkey references people(id) ON DELETE CASCADE. partners_deathday_requires_birthday_check requires deathday IS NULL OR birthday IS NOT NULL. There is no uniqueness constraint on partner_id. The admin application offers no deletion operations.
 
-The table already exists and migration files are managed externally. Public spouse behavior reads `partners`; administrative spouse behavior reads and writes `partners`. Legacy spouse columns remain physically present on `people` until Phase 3, but are not read or synchronized by application spouse behavior. Phase 2 does not change database, migration or seed files.
+The table already exists and migration files are managed externally. Public spouse behavior reads `partners`; administrative spouse behavior reads and writes `partners`. Phase 3 removes remaining application references to legacy spouse columns on `people`. Removal of those columns and their date constraint is managed externally; database, migration and seed files are unchanged by this cleanup.
 
 ### `logs`
 

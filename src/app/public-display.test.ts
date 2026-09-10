@@ -170,13 +170,11 @@ test("all partner records count toward the association even with duplicate names
   assert.equal(visiblePartners[0].childCount, null);
 });
 
-test("ignores legacy spouse values even when supplied by an old caller", () => {
-  const rows = getPublicRows(
-    people.map((person) => ({ ...person, spouse: "Legacy Name" })),
-    [],
-  );
+test("without partner records, Cherry Kin have no spouse display or partner search matches", () => {
+  const rows = getPublicRows(people, []);
   assert.ok(rows.people.every((person) => person.spouse === null));
-  assert.deepEqual(filterPeopleBySearch(rows.people, "Legacy"), []);
+  assert.deepEqual(rows.partners, []);
+  assert.deepEqual(filterPeopleBySearch(rows.people, "Unknown Birthday"), []);
 });
 
 test("Root group includes zero, one or multiple partners, including unknown birthdays", () => {

@@ -6,7 +6,7 @@ import { pool } from "./db";
 import { validateParentRelationships } from "./people";
 import type { Person } from "./people";
 
-export type AdminPerson = Omit<Person, "spouse">;
+export type AdminPerson = Person;
 
 export async function readAdminPeople(
   client?: PoolClient,

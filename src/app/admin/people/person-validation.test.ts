@@ -267,18 +267,14 @@ test("admin display abbreviates months and leaves absent values blank", () => {
   assert.equal(formatPhoneNumber(null), "");
 });
 
-test("legacy spouse input is ignored and cannot become editable Cherry Kin data", () => {
-  const values = validatePerson(
-    {
-      ...valid,
-      spouse: "Hidden",
-      spouseBirthday: "invalid",
-      spouseDeathday: true,
-    },
-    people,
-    today,
-  );
-  assert.equal("spouse" in values, false);
-  assert.equal("spouseBirthday" in values, false);
-  assert.equal("spouseDeathday" in values, false);
+test("Cherry Kin validation returns only current editable people fields", () => {
+  const values = validatePerson(valid, people, today);
+  assert.deepEqual(Object.keys(values).sort(), [
+    "birthday",
+    "deathday",
+    "firstName",
+    "lastName",
+    "parentId",
+    "phoneNumber",
+  ]);
 });

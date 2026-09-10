@@ -39,7 +39,7 @@ test("All is the default and each type combines with trimmed case-insensitive se
   assert.deepEqual(filterAdminRows(rows, "Herschel", "cherryKin"), []);
 });
 
-test("every displayed field is searchable and hidden legacy values are ignored", () => {
+test("every displayed field is searchable", () => {
   for (const row of rows) {
     for (const value of [
       row.fullName,
@@ -52,14 +52,6 @@ test("every displayed field is searchable and hidden legacy values are ignored",
       assert.ok(filterAdminRows(rows, value, row.type).includes(row), value);
     }
   }
-  assert.deepEqual(
-    filterAdminRows(
-      [{ ...kin, ...{ spouse: "Hidden legacy name" } }],
-      "Hidden",
-      "all",
-    ),
-    [],
-  );
 });
 
 test("admin navigation preserves both filters and safely encodes search text", () => {

@@ -89,7 +89,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Spouse names and rows are non-clickable throughout public Genealogy and List Views, including the Root group and all ancestry sections. Render names as plain text with no click handler, pointer cursor, link styling, or selection hover effect. Spouses never select a Root Cherry Kin. Their existing Age detail controls remain available.
 - A Cherry Kin's Spouse column shows all associated Spouse Full Names, separated by commas, including those without Birthdays.
 - Both row types use the List sorting rules above, including Age, and case-insensitive, trimmed partial search against Full Name OR Spouse only. Age and Birthed are not searched. There is no sort-direction control. Blank Birthdays sort after real dates.
-- Phase 2 changes only public application behavior. Legacy spouse columns remain physically present in `people` until Phase 3, but the application does not read or synchronize them. Database, migration and seed files are unchanged.
+- The application requires no legacy spouse columns in `people`. Their removal is managed externally; Phase 3 cleanup does not change database, migration or seed files.
 
 ## Genealogy View
 

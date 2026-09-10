@@ -14,6 +14,6 @@ Run against the development database with the externally managed partners table 
 - Verify blank optional dates save as SQL NULL. Reject Death Day without Birthday with a clear form error and direct API 400 response. Reject future/malformed dates or death before birth; accept equal dates.
 - Verify required names and valid existing Cherry Kin association on client and server. Test invalid URL ids and missing records (404).
 - Verify one Save button, pending protection, retained input on failure, unchanged-edit message, and matching form styles. Successful Add stays, clears the form, identifies the added record and permits another entry. Successful Edit returns to the fresh filtered list.
-- Submit legacy spouse properties directly to Cherry Kin POST/PUT; verify they are ignored. Snapshot existing legacy columns before mutations and confirm they remain identical afterward. Spouse writes must not update people.
+- After the externally managed column removal, verify Cherry Kin and Spouse POST/PUT requests still succeed with their current form fields. Spouse writes must not update people.
 - Verify no delete controls or mutation operations were added (unsupported DELETE returns 405).
 - Confirm public pages and behavior are unchanged and database/ files match their pre-task state.
