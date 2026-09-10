@@ -50,7 +50,9 @@ export async function saveAncestor(
     const savedId = await writeAncestor(client, values, ancestorId);
     await insertPersonLog(
       client,
-      `${stored ? "Edited" : "Added"} Ancestor id=${savedId}, full_name=${JSON.stringify(getFullName(values))}.`,
+      stored
+        ? `Edited Ancestor id=${savedId}, full_name=${JSON.stringify(getFullName(values))}.`
+        : `Added Ancestor id=${savedId}, first_name=${JSON.stringify(values.firstName)}, last_name=${JSON.stringify(values.lastName)}, birthday=${JSON.stringify(values.birthday)}, deathday=${JSON.stringify(values.deathday)}, spouse=${JSON.stringify(values.spouse)}.`,
     );
     return savedId;
   });
