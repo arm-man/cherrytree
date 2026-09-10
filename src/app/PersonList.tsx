@@ -7,6 +7,7 @@ import { DeceasedAge } from "./DeceasedAge";
 import { PersonPhone } from "./PersonPhone";
 
 import birthcake from "../../public/birthcake.jpg";
+import cross from "../../public/cross.jpg";
 import {
   formatAge,
   getLocalDateOnly,
@@ -328,25 +329,43 @@ export function PersonList({
 
   return (
     <>
-      <h1 className="wordmark-heading">
+      <header className="public-header">
+        <h1 className="wordmark-heading">
+          <button
+            type="button"
+            className="wordmark"
+            aria-label="Reset Cherry Tree"
+            onClick={reset}
+          >
+            <Image
+              className="wordmark-icon"
+              src={birthcake}
+              alt=""
+              loading="eager"
+              unoptimized
+            />
+            <span className="wordmark-label">
+              <span>Cherry</span> Tree
+            </span>
+          </button>
+        </h1>
+
         <button
           type="button"
-          className="wordmark"
-          aria-label="Reset Cherry Tree"
-          onClick={reset}
+          className="passing-sort-button"
+          aria-label="Sort by Date of Passing"
+          title="Sort by Date of Passing"
+          onClick={() => handleSortChange("Death Day")}
         >
           <Image
-            className="wordmark-icon"
-            src={birthcake}
+            className="passing-sort-icon"
+            src={cross}
             alt=""
             loading="eager"
             unoptimized
           />
-          <span className="wordmark-label">
-            <span>Cherry</span> Tree
-          </span>
         </button>
-      </h1>
+      </header>
 
       <section className="controls" aria-label="Controls">
         <div className="control-field">
