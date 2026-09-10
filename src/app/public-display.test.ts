@@ -12,6 +12,7 @@ import {
   getAncestorSections,
   getListRows,
   getParentSection,
+  getPartnerNavigationPersonId,
   getPublicRows,
 } from "./public-display.ts";
 import type {
@@ -125,7 +126,7 @@ test("builds separate rows with ID associations, comma-separated spouses and no 
   );
   assert.deepEqual(
     rows.partners.map((partner) => partner.navigationPersonId),
-    [null, null, null, null],
+    [1, null, null, null],
   );
   assert.deepEqual(
     rows.partners.map((partner) => partner.childCount),
@@ -189,8 +190,9 @@ test("Root group includes zero, one or multiple partners, including unknown birt
     assert.equal(section.rows.length, count + 1);
     assert.equal(section.rows[0].rowKey, "person-1");
     assert.equal(section.rows[0].navigationPersonId, 1);
-    assert.ok(
-      section.rows.slice(1).every((row) => row.navigationPersonId === null),
+    assert.deepEqual(
+      section.rows.slice(1).map((row) => row.navigationPersonId),
+      count === 2 ? [1, null] : Array(count).fill(null),
     );
     if (count > 0) {
       assert.equal(section.rows.at(-1)?.birthday, null);
@@ -198,7 +200,7 @@ test("Root group includes zero, one or multiple partners, including unknown birt
   }
 });
 
-test("only Cherry Kin are navigation targets, always using their own ID", () => {
+test("Cherry Kin and only partner id 1 navigate to people records", () => {
   const rows = getPublicRows(people, partners);
   const peopleById = new Map(rows.people.map((person) => [person.id, person]));
   for (const root of rows.people) {
@@ -214,10 +216,27 @@ test("only Cherry Kin are navigation targets, always using their own ID", () => 
     for (const row of displayedRows) {
       assert.equal(
         row.navigationPersonId,
-        row.type === "cherryKin" ? row.id : null,
+        row.type === "cherryKin"
+          ? row.id
+          : row.type === "partner" && row.id === 1
+            ? 1
+            : null,
       );
     }
   }
+});
+
+test("partner id 1 targets people id 1 regardless of spouse association", () => {
+  const specialPartner = { ...partners[0], partnerId: 2 };
+  const otherPartnerForPersonOne = { ...partners[1], id: 99, partnerId: 1 };
+  const rows = getPublicRows(people, [specialPartner, otherPartnerForPersonOne]);
+
+  assert.equal(getPartnerNavigationPersonId(specialPartner), 1);
+  assert.equal(getPartnerNavigationPersonId(otherPartnerForPersonOne), null);
+  assert.deepEqual(
+    rows.partners.map((partner) => partner.navigationPersonId),
+    [1, null],
+  );
 });
 
 test("ancestry follows only parent IDs, includes every associated spouse and stops at three generations", () => {

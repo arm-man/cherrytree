@@ -27,6 +27,7 @@ import {
   getListRows,
   getParentSection,
   getPublicRows,
+  ROOT_PERSON_ID,
 } from "./public-display";
 import type {
   CherryKinRow,
@@ -60,7 +61,6 @@ interface PersonTableProps {
 
 type View = "genealogy" | "list";
 
-const ROOT_PERSON_ID = 1;
 const MONTH_NAMES = [
   "January",
   "February",
@@ -184,6 +184,7 @@ function PersonTable({
                 person.type !== "cherryKin" || person.parentId === null
                   ? undefined
                   : peopleById.get(person.parentId);
+              const navigationPersonId = person.navigationPersonId;
 
               return (
                 <tr
@@ -199,7 +200,7 @@ function PersonTable({
                         : "person-name"
                     }
                   >
-                    {person.navigationPersonId === null ? (
+                    {navigationPersonId === null ? (
                       <span className="person-name-text">
                         {getFullName(person)}
                       </span>
@@ -207,9 +208,7 @@ function PersonTable({
                       <button
                         type="button"
                         className="person-name-button"
-                        onClick={() =>
-                          onPersonNameClick(person.navigationPersonId)
-                        }
+                        onClick={() => onPersonNameClick(navigationPersonId)}
                       >
                         {getFullName(person)}
                       </button>

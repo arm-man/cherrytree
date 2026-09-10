@@ -19,6 +19,14 @@ export interface PublicPartner {
   deathday: string | null;
 }
 
+export const ROOT_PERSON_ID = 1;
+
+export function getPartnerNavigationPersonId(
+  partner: Pick<PublicPartner, "id">,
+): number | null {
+  return partner.id === 1 ? ROOT_PERSON_ID : null;
+}
+
 export interface PublicAncestor {
   id: number;
   firstName: string;
@@ -46,7 +54,7 @@ export interface CherryKinRow extends PublicPerson {
 export interface PartnerRow extends PublicPartner {
   type: "partner";
   rowKey: string;
-  navigationPersonId: null;
+  navigationPersonId: number | null;
   spouse: string;
   childCount: number | null;
 }
@@ -77,7 +85,7 @@ export function getPublicRows(
       ...partner,
       type: "partner",
       rowKey: `partner-${partner.id}`,
-      navigationPersonId: null,
+      navigationPersonId: getPartnerNavigationPersonId(partner),
       spouse: getFullName(person),
       childCount: null,
     });
