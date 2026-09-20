@@ -59,6 +59,22 @@ interface PersonTableProps {
   onSortChange?: (sortOption: SortOption) => void;
 }
 
+function DescendantHeading({
+  count,
+  title,
+}: {
+  count: number;
+  title: string;
+}) {
+  return (
+    <h2 className="descendant-heading">
+      <span>{title}</span>
+      <span className="descendant-count">{count}</span>
+      <span className="descendant-divider" aria-hidden="true" />
+    </h2>
+  );
+}
+
 type View = "genealogy" | "list";
 
 const MONTH_NAMES = [
@@ -479,7 +495,10 @@ export function PersonList({
           </section>
 
           <section className="generation">
-            <h2>Children ({generations.children.length})</h2>
+            <DescendantHeading
+              count={generations.children.length}
+              title="Children"
+            />
             {generations.children.length === 0 ? (
               <p className="empty-generation">No Children</p>
             ) : (
@@ -499,7 +518,10 @@ export function PersonList({
 
           {generations.grandchildren.length > 0 ? (
             <section className="generation">
-              <h2>Grandchildren ({generations.grandchildren.length})</h2>
+              <DescendantHeading
+                count={generations.grandchildren.length}
+                title="Grandchildren"
+              />
               <PersonTable
                 ariaLabel="Grandchildren"
                 showPhone
@@ -517,9 +539,10 @@ export function PersonList({
 
           {generations.greatGrandchildren.length > 0 ? (
             <section className="generation">
-              <h2>
-                Great Grandchildren ({generations.greatGrandchildren.length})
-              </h2>
+              <DescendantHeading
+                count={generations.greatGrandchildren.length}
+                title="Great Grandchildren"
+              />
               <PersonTable
                 ariaLabel="Great Grandchildren"
                 showPhone
@@ -537,10 +560,10 @@ export function PersonList({
 
           {generations.greatGreatGrandchildren.length > 0 ? (
             <section className="generation">
-              <h2>
-                Great Great Grandchildren (
-                {generations.greatGreatGrandchildren.length})
-              </h2>
+              <DescendantHeading
+                count={generations.greatGreatGrandchildren.length}
+                title="Great Great Grandchildren"
+              />
               <PersonTable
                 ariaLabel="Great Great Grandchildren"
                 showPhone

@@ -246,6 +246,32 @@ a {
   font-weight: 700;
 }
 
+.generation .descendant-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 0.25rem;
+}
+
+.descendant-count {
+  display: inline-flex;
+  min-width: 1.75rem;
+  min-height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--highlight);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.descendant-divider {
+  height: 2px;
+  flex: 1;
+  background: var(--highlight);
+}
+
 /* Keep ancestor and descendant column labels available to screen readers. */
 .generation:not(.root-generation) thead {
   position: absolute;
