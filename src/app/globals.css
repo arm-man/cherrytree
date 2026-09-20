@@ -57,9 +57,41 @@ a {
 }
 
 .page-shell {
+  position: relative;
+  isolation: isolate;
   width: min(100% - 2rem, 70rem);
   margin: 0 auto;
   padding: clamp(1.5rem, 5vw, 4rem) 0;
+}
+
+/* Quiet botanical framing for the public page; the artwork stays below content. */
+.page-shell:not([data-theme="admin"])::before,
+.page-shell:not([data-theme="admin"])::after {
+  position: absolute;
+  z-index: -1;
+  width: clamp(17rem, 34vw, 27rem);
+  aspect-ratio: 440 / 360;
+  background: url("/cherry-branch-motif.svg") center / contain no-repeat;
+  content: "";
+  opacity: 0.12;
+  pointer-events: none;
+  user-select: none;
+}
+
+.page-shell:not([data-theme="admin"])::before {
+  top: 0;
+  right: clamp(-4.5rem, -5vw, -2rem);
+}
+
+.page-shell:not([data-theme="admin"])::after {
+  bottom: 0;
+  left: clamp(-4.5rem, -5vw, -2rem);
+  background-image: url("/cherry-branch-bottom-motif.svg");
+}
+
+.page-shell > * {
+  position: relative;
+  z-index: 1;
 }
 
 .public-header {
@@ -529,6 +561,15 @@ td.highlighted-birthday {
   .page-shell {
     width: min(100% - 1rem, 70rem);
     padding: 1.25rem 0;
+  }
+
+  .page-shell:not([data-theme="admin"])::before {
+    right: -4rem;
+    width: 14rem;
+  }
+
+  .page-shell:not([data-theme="admin"])::after {
+    display: none;
   }
 
   .wordmark {

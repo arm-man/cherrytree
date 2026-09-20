@@ -7,7 +7,7 @@ import { DeceasedAge } from "./DeceasedAge";
 import { PersonPhone } from "./PersonPhone";
 
 import birthcake from "../../public/birthcake.jpg";
-import cross from "../../public/cross.jpg";
+import cross from "../../public/cross.png";
 import {
   formatAge,
   getLocalDateOnly,
