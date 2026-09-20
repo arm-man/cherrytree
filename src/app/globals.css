@@ -365,7 +365,7 @@ td {
   vertical-align: middle;
   background: var(--surface);
   font-size: 15px;
-  box-shadow: 0 0.5rem 1.5rem rgba(86, 56, 47, 0.07);
+  box-shadow: 0 2px 5px rgba(86, 56, 47, 0.055);
 }
 
 td:first-child {
