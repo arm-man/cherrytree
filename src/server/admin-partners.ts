@@ -53,8 +53,28 @@ export async function savePartner(
       throw new PartnerValidationError("NO_CHANGES", "No changes were made.");
     }
     const savedId = await writePartner(client, values, partnerId);
+    const associatedPerson = people.find(
+      (person) => person.id === values.partnerId,
+    );
+    if (!associatedPerson) {
+      // Server validation already requires this association. Keep the guard so
+      // the log can never silently substitute an id or an incorrect name.
+      throw new Error("Spouse association references missing Cherry Kin.");
+    }
+    const addedDetails = [
+      `full_name=${JSON.stringify(getFullName(values))}`,
+      ...(values.birthday
+        ? [`birthday=${JSON.stringify(values.birthday)}`]
+        : []),
+      ...(values.deathday
+        ? [`deathday=${JSON.stringify(values.deathday)}`]
+        : []),
+      `partner_full_name=${JSON.stringify(getFullName(associatedPerson))}`,
+    ];
     await writeInfoLog(
-      `${stored ? "Edited" : "Added"} Spouse id=${savedId}, full_name=${JSON.stringify(getFullName(values))}, partner_id=${values.partnerId}.`,
+      stored
+        ? `Edited Spouse id=${savedId}, full_name=${JSON.stringify(getFullName(values))}, partner_id=${values.partnerId}.`
+        : `Added Spouse id=${savedId}, ${addedDetails.join(", ")}.`,
     );
     return savedId;
   });
