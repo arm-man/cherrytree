@@ -282,7 +282,7 @@ Use:
 - `.env.development.local` for the development database connection.
 - Vercel environment variables for the production database connection.
 
-Any future credentials or authentication secrets should be handled the same way.
+The Resend log-email integration uses `RESEND_API_KEY` and `LOG_EMAIL_TO` as server-only Vercel environment variables.
 
 Vercel preview deployments must not receive the production database connection string. Initially, previews may use the development database or have no database configured.
 
@@ -295,7 +295,7 @@ Do not create a custom error-handling framework.
 ## Logging and Monitoring
 
 Write server-side errors and operational warnings to the PostgreSQL `logs` table when the database is available. Errors use the default `error` severity; warnings use severity `warning`. If database logging fails, write the error to the server console without retrying the database write.
-Do not introduce another logging, monitoring, tracing, or observability service.
+After each application-created log row commits, make a best-effort attempt to email its exact message through Resend to `LOG_EMAIL_TO`, from `Cherry Tree <logs@cherrytree.website>`, with the subject `New log added to CherryTree`. Email failures are written to the server console and must not fail or roll back the operation that created the log. Do not introduce another logging, monitoring, tracing, or observability service.
 
 ## Testing
 

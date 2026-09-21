@@ -11,7 +11,6 @@ import type { PersonValues } from "@/app/admin/people/person-validation";
 import {
   getValidationDate,
   insertPerson,
-  insertPersonLog,
   readAdminPeople,
   updatePerson,
   withPeopleTransaction,
@@ -84,7 +83,7 @@ export async function savePerson(
   input: unknown,
   personId?: number,
 ): Promise<number> {
-  return withPeopleTransaction(async (client) => {
+  return withPeopleTransaction(async (client, writeInfoLog) => {
     const people = await readAdminPeople(client);
     const stored = people.find((person) => person.id === personId);
     if (personId !== undefined && !stored) {
@@ -111,8 +110,7 @@ export async function savePerson(
       await updatePerson(client, stored.id, values);
       for (const [field, column] of PERSON_COLUMNS) {
         if (stored[field] !== values[field]) {
-          await insertPersonLog(
-            client,
+          await writeInfoLog(
             `Edited Person id=${stored.id}, full_name=${JSON.stringify(getFullName(stored))}: ${column} changed from ${formatPersonLogValue(stored, field, people)} to ${formatPersonLogValue(values, field, people)}.`,
           );
         }
@@ -128,8 +126,7 @@ export async function savePerson(
       ([field, column]) =>
         `${column}=${formatPersonLogValue(values, field, people)}`,
     );
-    await insertPersonLog(
-      client,
+    await writeInfoLog(
       `Added Person id=${createdId}: ${details.join(", ")}.`,
     );
     return createdId;

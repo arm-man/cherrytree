@@ -10,7 +10,6 @@ import { getFullName } from "@/app/admin/people/person-validation";
 import { logPeopleError } from "./admin-people";
 import {
   getValidationDate,
-  insertPersonLog,
   readAdminPeople,
   withPeopleTransaction,
 } from "./admin-people-db";
@@ -31,7 +30,7 @@ export async function savePartner(
 ): Promise<number> {
   // Use the same writer lock as Cherry Kin saves so association validation and
   // no-change checks remain consistent across concurrent admin requests.
-  return withPeopleTransaction(async (client) => {
+  return withPeopleTransaction(async (client, writeInfoLog) => {
     const people = await readAdminPeople(client);
     const stored =
       partnerId === undefined
@@ -54,8 +53,7 @@ export async function savePartner(
       throw new PartnerValidationError("NO_CHANGES", "No changes were made.");
     }
     const savedId = await writePartner(client, values, partnerId);
-    await insertPersonLog(
-      client,
+    await writeInfoLog(
       `${stored ? "Edited" : "Added"} Spouse id=${savedId}, full_name=${JSON.stringify(getFullName(values))}, partner_id=${values.partnerId}.`,
     );
     return savedId;

@@ -2,7 +2,8 @@ import "server-only";
 
 import type { PoolClient } from "pg";
 import type { PersonValues } from "@/app/admin/people/person-validation";
-import { pool } from "./db";
+import { insertLog, pool } from "./db";
+import { sendLogEmail } from "./log-email";
 import { validateParentRelationships } from "./people";
 import type { Person } from "./people";
 
@@ -24,19 +25,26 @@ export async function readAdminPeople(
 }
 
 export async function withPeopleTransaction<T>(
-  operation: (client: PoolClient) => Promise<T>,
+  operation: (
+    client: PoolClient,
+    writeInfoLog: (message: string) => Promise<void>,
+  ) => Promise<T>,
 ): Promise<T> {
   const client = await pool.connect();
+  const committedLogMessages: string[] = [];
   let discardClient = false;
+  let result: T;
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL TIME ZONE 'UTC'");
     // Serialize writers before reading the graph. Ordinary readers remain unblocked.
     // A transaction alone would allow two requests to validate stale relationships.
     await client.query("LOCK TABLE people IN SHARE ROW EXCLUSIVE MODE");
-    const result = await operation(client);
+    result = await operation(client, async (message: string) => {
+      await insertLog(client, message, "info");
+      committedLogMessages.push(message);
+    });
     await client.query("COMMIT");
-    return result;
   } catch (error: unknown) {
     try {
       await client.query("ROLLBACK");
@@ -50,6 +58,13 @@ export async function withPeopleTransaction<T>(
   } finally {
     client.release(discardClient);
   }
+
+  // Notify only after commit and connection release. The helper absorbs delivery
+  // failures so email can never change the result of the completed transaction.
+  for (const message of committedLogMessages) {
+    await sendLogEmail(message);
+  }
+  return result;
 }
 
 export async function getValidationDate(client: PoolClient): Promise<string> {
@@ -76,17 +91,6 @@ export async function insertPerson(
     ],
   );
   return result.rows[0].id;
-}
-
-export async function insertPersonLog(
-  client: PoolClient,
-  message: string,
-): Promise<void> {
-  // Use the save transaction so the Person and all its logs commit together.
-  await client.query(
-    "INSERT INTO logs (severity, message) VALUES ('info', $1)",
-    [message],
-  );
 }
 
 export async function updatePerson(
