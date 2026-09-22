@@ -110,7 +110,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - The Root Cherry Kin section contains exactly one Cherry Kin: the Root Cherry Kin.
   - Place one subtle box around the entire group, including the Root Cherry Kin and all of their Spouses. Use the existing site palette; do not add separate boxes around individuals. With no Spouses, the box contains just the Root Cherry Kin.
   - The Root group has no heading, regardless of the number of linked Spouses. With no Spouses, only the Root Cherry Kin appears.
-  - Display the Genealogy column headings inside the shaded Root group box, above its rows. Other Genealogy tables retain column headings for screen readers but do not display them visually.
+  - Display the Genealogy column headings inside the shaded Root group box, above its rows. Grandchildren also displays its column headings because its columns differ from Children. Other Genealogy tables retain column headings for screen readers but do not display them visually.
   - Show all linked Spouses immediately after the Cherry Kin using the existing table columns, even without Birthdays. A sole Spouse's name aligns with the Cherry Kin's name; with two or more Spouses, slightly indent every Spouse name.
   - Spouse rows appear in the Root group and ancestry sections, never in any descendant section or descendant count.
 - Above the boxed Root group, show up to three ancestry tables in top-down order: `Great Grandparents`, `Grandparents`, `Parents`. The Root group sits between Parents and Children, with the remaining descendants below Children.
@@ -133,6 +133,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - The Children table is sorted by Birthday, ascending (oldest first).
 - For Grandchildren, Great Grandchildren, and Great Great Grandchildren:
   - Include an additional column called Parent, which displays the Cherry Kin's immediate parent.
+  - Omit the Spouse column. These tables use Name, Parent, Age, Birthed, and Children.
   - These tables are sorted first by the immediate Parent's birthday, ascending (oldest first), then by the Cherry Kin's Birthday, ascending (oldest first).
 
 ## User Experience

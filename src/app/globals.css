@@ -343,8 +343,8 @@ a {
   background: var(--highlight);
 }
 
-/* Keep ancestor and descendant column labels available to screen readers. */
-.generation:not(.root-generation) thead {
+/* Keep other ancestor and descendant column labels available to screen readers. */
+.generation:not(.root-generation):not(.visible-column-headings) thead {
   position: absolute;
   width: 1px;
   height: 1px;

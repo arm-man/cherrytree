@@ -53,6 +53,7 @@ interface PersonTableProps {
   showPassedAway?: boolean;
   showParent?: boolean;
   showPhone?: boolean;
+  showSpouse?: boolean;
   indentPartners?: boolean;
   today: string | null;
   isBirthdayHighlighted?: (person: PublicRow) => boolean;
@@ -171,6 +172,7 @@ function PersonTable({
   showPassedAway = false,
   showParent = false,
   showPhone = false,
+  showSpouse = true,
   indentPartners = false,
   today,
   isBirthdayHighlighted,
@@ -179,7 +181,11 @@ function PersonTable({
   onSortChange,
 }: PersonTableProps) {
   const columnCount =
-    4 + Number(showChildren) + Number(showParent) + Number(showPassedAway);
+    3 +
+    Number(showChildren) +
+    Number(showParent) +
+    Number(showPassedAway) +
+    Number(showSpouse);
 
   function renderColumnTitle(title: string, sortOption: SortOption): ReactNode {
     // Only the List table receives the existing dropdown's sort handler.
@@ -215,7 +221,9 @@ function PersonTable({
             {showChildren ? (
               <th scope="col">{renderColumnTitle("Children", "Children")}</th>
             ) : null}
-            <th scope="col">{renderColumnTitle("Spouse", "Spouse")}</th>
+            {showSpouse ? (
+              <th scope="col">{renderColumnTitle("Spouse", "Spouse")}</th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -311,7 +319,7 @@ function PersonTable({
                       <ChildrenCount person={person} />
                     </td>
                   ) : null}
-                  <td>{person.spouse ?? ""}</td>
+                  {showSpouse ? <td>{person.spouse ?? ""}</td> : null}
                 </tr>
               );
             })
@@ -566,7 +574,7 @@ export function PersonList({
           </section>
 
           {generations.grandchildren.length > 0 ? (
-            <section className="generation">
+            <section className="generation visible-column-headings">
               <DescendantHeading
                 counts={generations.counts.grandchildren}
                 title="Grandchildren"
@@ -578,6 +586,7 @@ export function PersonList({
                 people={generations.grandchildren}
                 peopleById={peopleById}
                 showParent
+                showSpouse={false}
                 today={today}
                 isRowHighlighted={(person) =>
                   personMatchesSearch(person, searchText)
@@ -600,6 +609,7 @@ export function PersonList({
                 people={generations.greatGrandchildren}
                 peopleById={peopleById}
                 showParent
+                showSpouse={false}
                 today={today}
                 isRowHighlighted={(person) =>
                   personMatchesSearch(person, searchText)
@@ -622,6 +632,7 @@ export function PersonList({
                 people={generations.greatGreatGrandchildren}
                 peopleById={peopleById}
                 showParent
+                showSpouse={false}
                 today={today}
                 isRowHighlighted={(person) =>
                   personMatchesSearch(person, searchText)
