@@ -1,7 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import birthcake from "../../../../public/birthcake.jpg";
 import styles from "./admin.module.css";
 
 export const runtime = "nodejs";
@@ -14,12 +12,6 @@ export default function AdminPeopleLayout({
   return (
     <main className={`page-shell ${styles.admin}`} data-theme="admin">
       <Link href="/" className="wordmark" aria-label="Cherry Tree home">
-        <Image
-          src={birthcake}
-          alt=""
-          className="wordmark-icon"
-          loading="eager"
-        />
         <span className="wordmark-label">
           Cherry <span>Tree</span>
         </span>
