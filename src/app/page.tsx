@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import Link from "next/link";
 
 import { PersonList } from "@/app/PersonList";
 import { logServerError } from "@/server/db";
@@ -26,6 +27,11 @@ export default async function Home() {
   return (
     <main className="page-shell">
       <PersonList people={people} partners={partners} ancestors={ancestors} />
+      <footer className="public-footer">
+        <Link className="about-link" href="/about">
+          About
+        </Link>
+      </footer>
     </main>
   );
 }

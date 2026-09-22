@@ -1,0 +1,118 @@
+.content {
+  width: min(100%, 46rem);
+  margin: 0 auto;
+  padding: clamp(0.5rem, 2vw, 1.5rem) 0;
+}
+
+.introduction {
+  text-align: center;
+}
+
+.introduction h1 {
+  color: var(--foreground);
+  font-size: clamp(2.25rem, 7vw, 3.25rem);
+  font-weight: 750;
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+}
+
+.introduction > p:first-of-type {
+  margin-top: 1.25rem;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+  line-height: 1.5;
+}
+
+.dedicationNames {
+  margin-top: 0.25rem;
+  color: var(--accent-strong);
+  font-size: clamp(1.25rem, 3.5vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.portraits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(2rem, 7vw, 4.5rem);
+  width: min(100%, 34rem);
+  margin: clamp(2rem, 6vw, 3.5rem) auto 0;
+}
+
+.portrait {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+}
+
+.portraitImage {
+  width: 200px;
+  height: 200px;
+  border: 0.3rem solid rgba(255, 255, 255, 0.72);
+  border-radius: 1.15rem;
+  object-fit: cover;
+  box-shadow: 0 0.65rem 1.75rem rgba(86, 56, 47, 0.14);
+}
+
+.portrait figcaption {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.portraitName {
+  color: var(--accent-strong);
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.years {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.divider {
+  display: grid;
+  grid-template-columns: minmax(2rem, 1fr) auto minmax(2rem, 1fr);
+  align-items: center;
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+  width: min(100%, 36rem);
+  margin: clamp(2.25rem, 7vw, 4rem) auto;
+}
+
+.divider span {
+  height: 1px;
+  background: color-mix(in srgb, var(--accent-strong) 38%, transparent);
+}
+
+.divider img {
+  width: 45px;
+  height: 65px;
+}
+
+.story {
+  display: grid;
+  gap: 1.25rem;
+  color: var(--foreground);
+  font-size: clamp(1rem, 2.5vw, 1.075rem);
+  line-height: 1.75;
+}
+
+@media (max-width: 34rem) {
+  .content {
+    padding-top: 0;
+  }
+
+  .portraits {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .divider {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+  }
+}
