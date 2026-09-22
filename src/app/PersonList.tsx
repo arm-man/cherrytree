@@ -352,34 +352,45 @@ export function PersonList({
             aria-label="Reset Cherry Tree"
             onClick={reset}
           >
-            <Image
-              className="wordmark-icon"
-              src={birthcake}
-              alt=""
-              loading="eager"
-              unoptimized
-            />
             <span className="wordmark-label">
               <span>Cherry</span> Tree
             </span>
           </button>
         </h1>
 
-        <button
-          type="button"
-          className="passing-sort-button"
-          aria-label="Sort by Date of Passing"
-          title="Sort by Date of Passing"
-          onClick={() => handleSortChange("Death Day")}
-        >
-          <Image
-            className="passing-sort-icon"
-            src={cross}
-            alt=""
-            loading="eager"
-            unoptimized
-          />
-        </button>
+        <div className="header-sort-buttons">
+          <button
+            type="button"
+            className="header-sort-button"
+            aria-label="Sort by Upcoming Birthday"
+            title="Sort by Upcoming Birthday"
+            onClick={() => handleSortChange("Upcoming Birthday")}
+          >
+            <Image
+              className="birthday-sort-icon"
+              src={birthcake}
+              alt=""
+              loading="eager"
+              unoptimized
+            />
+          </button>
+
+          <button
+            type="button"
+            className="header-sort-button"
+            aria-label="Sort by Date of Passing"
+            title="Sort by Date of Passing"
+            onClick={() => handleSortChange("Death Day")}
+          >
+            <Image
+              className="passing-sort-icon"
+              src={cross}
+              alt=""
+              loading="eager"
+              unoptimized
+            />
+          </button>
+        </div>
       </header>
 
       <section className="controls" aria-label="Controls">

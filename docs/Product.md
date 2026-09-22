@@ -27,10 +27,12 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
 - Children is derived as the number of Cherry Kin whose parent is that Cherry Kin and is not independently maintained.
 
-## Wordmark
+## Page Header
 
-- The page will have a Cherry Tree wordmark in the upper left.
+- The page will have a left-justified Cherry Tree wordmark followed by a right-justified Birthday cake icon and cross icon.
 - When the wordmark is clicked, perform a Reset.
+- When the Birthday cake icon is clicked, select Upcoming Birthday using the same behavior as the Sort control.
+- When the cross icon is clicked, select Date of Passing using the same behavior as the Sort control.
 
 ## Control Section
 
