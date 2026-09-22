@@ -26,6 +26,7 @@ const PERSON_COLUMNS: [keyof PersonValues, string][] = [
   ["deathday", "deathday"],
   ["phoneNumber", "phone_number"],
   ["parentId", "parent"],
+  ["isStepOrAdopted", "is_step_or_adopted"],
 ];
 
 function formatPersonLogValue(

@@ -3,6 +3,7 @@ import { getChildCounts, getFullName } from "./people-calculations.ts";
 export interface PublicPerson {
   id: number;
   parentId: number | null;
+  isStepOrAdopted: boolean;
   firstName: string;
   lastName: string;
   birthday: string;
@@ -41,6 +42,7 @@ export interface AncestorRow extends PublicAncestor {
   rowKey: string;
   navigationPersonId: null;
   childCount: null;
+  stepOrAdoptedChildCount: null;
 }
 
 export interface CherryKinRow extends PublicPerson {
@@ -49,6 +51,7 @@ export interface CherryKinRow extends PublicPerson {
   navigationPersonId: number;
   spouse: string | null;
   childCount: number;
+  stepOrAdoptedChildCount: number;
 }
 
 export interface PartnerRow extends PublicPartner {
@@ -57,6 +60,7 @@ export interface PartnerRow extends PublicPartner {
   navigationPersonId: number | null;
   spouse: string;
   childCount: number | null;
+  stepOrAdoptedChildCount: number | null;
 }
 
 export type PublicRow = CherryKinRow | PartnerRow | AncestorRow;
@@ -88,6 +92,7 @@ export function getPublicRows(
       navigationPersonId: getPartnerNavigationPersonId(partner),
       spouse: getFullName(person),
       childCount: null,
+      stepOrAdoptedChildCount: null,
     });
   }
 
@@ -95,19 +100,31 @@ export function getPublicRows(
   // without birthdays. Search must not turn a multiple-spouse relationship into one.
   for (const partner of partnerRows) {
     if (spouseNames.get(partner.partnerId)?.length === 1) {
-      partner.childCount = childCounts.get(partner.partnerId) ?? 0;
+      const counts = childCounts.get(partner.partnerId) ?? {
+        normal: 0,
+        stepOrAdopted: 0,
+      };
+      partner.childCount = counts.normal;
+      partner.stepOrAdoptedChildCount = counts.stepOrAdopted;
     }
   }
 
   return {
-    people: people.map((person) => ({
-      ...person,
-      type: "cherryKin",
-      rowKey: `person-${person.id}`,
-      navigationPersonId: person.id,
-      spouse: spouseNames.get(person.id)?.join(", ") ?? null,
-      childCount: childCounts.get(person.id) ?? 0,
-    })),
+    people: people.map((person) => {
+      const counts = childCounts.get(person.id) ?? {
+        normal: 0,
+        stepOrAdopted: 0,
+      };
+      return {
+        ...person,
+        type: "cherryKin",
+        rowKey: `person-${person.id}`,
+        navigationPersonId: person.id,
+        spouse: spouseNames.get(person.id)?.join(", ") ?? null,
+        childCount: counts.normal,
+        stepOrAdoptedChildCount: counts.stepOrAdopted,
+      };
+    }),
     partners: partnerRows,
   };
 }
@@ -124,6 +141,7 @@ export function getListRows(
     rowKey: `ancestor-${ancestor.id}`,
     navigationPersonId: null,
     childCount: null,
+    stepOrAdoptedChildCount: null,
   }));
   return [...people, ...partners, ...ancestorRows];
 }

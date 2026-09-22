@@ -14,7 +14,8 @@ export async function readAdminPeople(
 ): Promise<AdminPerson[]> {
   // Keep the public query and its browser payload limited to public fields.
   const result = await (client ?? pool).query<AdminPerson>(
-    `SELECT id, parent_id AS "parentId", first_name AS "firstName",
+    `SELECT id, parent_id AS "parentId",
+       is_step_or_adopted AS "isStepOrAdopted", first_name AS "firstName",
        last_name AS "lastName", TO_CHAR(birthday, 'YYYY-MM-DD') AS birthday,
        TO_CHAR(deathday, 'YYYY-MM-DD') AS deathday,
        phone_number AS "phoneNumber"
@@ -79,14 +80,15 @@ export async function insertPerson(
   values: PersonValues,
 ): Promise<number> {
   const result = await client.query<{ id: number }>(
-    `INSERT INTO people (first_name, last_name, birthday, deathday, parent_id, phone_number)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    `INSERT INTO people (first_name, last_name, birthday, deathday, parent_id, is_step_or_adopted, phone_number)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
     [
       values.firstName,
       values.lastName,
       values.birthday,
       values.deathday,
       values.parentId,
+      values.isStepOrAdopted,
       values.phoneNumber,
     ],
   );
@@ -100,13 +102,15 @@ export async function updatePerson(
 ): Promise<void> {
   await client.query(
     `UPDATE people SET first_name = $1, last_name = $2, birthday = $3,
-       deathday = $4, parent_id = $5, phone_number = $6 WHERE id = $7`,
+       deathday = $4, parent_id = $5, is_step_or_adopted = $6,
+       phone_number = $7 WHERE id = $8`,
     [
       values.firstName,
       values.lastName,
       values.birthday,
       values.deathday,
       values.parentId,
+      values.isStepOrAdopted,
       values.phoneNumber,
       personId,
     ],

@@ -111,12 +111,14 @@ Request body:
   "birthday": "2026-09-05",
   "deathday": null,
   "phoneNumber": null,
-  "parentId": 42
+  "parentId": 42,
+  "isStepOrAdopted": false
 }
 ```
 
 - `firstName`, `lastName`, `birthday`, and `parentId` are required.
 - `deathday` and `phoneNumber` are optional and nullable. Omitted, null, or blank optional values are stored as null, including on PUT.
+- `isStepOrAdopted` is boolean. When omitted it defaults to false on POST and retains the stored value on PUT.
 - `phoneNumber` accepts a string containing 10 U.S. digits with spaces, parentheses, hyphens, or periods; the server stores digits only. Country codes, extensions, and other characters are rejected.
 - The database generates the new Cherry Kin's id; the id is not included in the request URL or request body.
 
@@ -169,7 +171,7 @@ Expected errors include the Create a Cherry Kin errors and:
 
 All validation errors use `400 Bad Request`. A missing Cherry Kin uses `404 Not Found`.
 
-For both endpoints, blank optional Death Day and Phone Number values are normalized to null. The server validates required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
+For both endpoints, blank optional Death Day and Phone Number values are normalized to null. The server validates the Step / Adopted boolean, required fields, date rules, Parent eligibility, the single-root rule, and cycle prevention before saving.
 
 
 ## Spouse Administration

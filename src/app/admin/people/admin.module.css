@@ -137,6 +137,21 @@
   gap: 0.4rem;
   min-width: 0;
 }
+.checkboxField label {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+.admin .checkboxField input {
+  width: 1.25rem;
+  min-height: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  accent-color: var(--accent-strong);
+}
 .optional,
 .help {
   color: var(--muted);

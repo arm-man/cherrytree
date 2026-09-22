@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { DeceasedAge } from "./DeceasedAge";
+import { DetailsPopup } from "./DetailsPopup";
 import { PersonPhone } from "./PersonPhone";
 
 import birthcake from "../../public/birthcake.jpg";
@@ -15,13 +16,14 @@ import {
 } from "./date-calculations";
 import {
   filterPeopleBySearch,
+  formatChildCountDescription,
   getFullName,
   getGenealogyGenerations,
   personMatchesSearch,
   SORT_OPTIONS,
   sortPeople,
 } from "./people-calculations";
-import type { SortOption } from "./people-calculations";
+import type { DescendantCounts, SortOption } from "./people-calculations";
 import {
   getAncestorSections,
   getListRows,
@@ -60,18 +62,47 @@ interface PersonTableProps {
 }
 
 function DescendantHeading({
-  count,
+  counts,
   title,
 }: {
-  count: number;
+  counts: DescendantCounts;
   title: string;
 }) {
+  const countLabel = counts.stepOrAdopted
+    ? `${counts.normal} + ${counts.stepOrAdopted} step/adopted`
+    : String(counts.normal);
+
   return (
     <h2 className="descendant-heading">
       <span>{title}</span>
-      <span className="descendant-count">{count}</span>
+      <span className="descendant-count">{countLabel}</span>
       <span className="descendant-divider" aria-hidden="true" />
     </h2>
+  );
+}
+
+function ChildrenCount({ person }: { person: PublicRow }) {
+  if (person.childCount === null) {
+    return "";
+  }
+
+  const stepOrAdoptedChildCount = person.stepOrAdoptedChildCount ?? 0;
+  if (stepOrAdoptedChildCount === 0) {
+    return person.childCount;
+  }
+
+  const description = formatChildCountDescription(
+    person.childCount,
+    stepOrAdoptedChildCount,
+  );
+  return (
+    <DetailsPopup
+      label={`${description}. Show child count details.`}
+      trigger={`${person.childCount} + ${stepOrAdoptedChildCount}`}
+      triggerClassName="children-count"
+    >
+      {description}
+    </DetailsPopup>
   );
 }
 
@@ -275,7 +306,11 @@ function PersonTable({
                         : formatDate(person.deathday)}
                     </td>
                   ) : null}
-                  {showChildren ? <td>{person.childCount ?? ""}</td> : null}
+                  {showChildren ? (
+                    <td>
+                      <ChildrenCount person={person} />
+                    </td>
+                  ) : null}
                   <td>{person.spouse ?? ""}</td>
                 </tr>
               );
@@ -477,6 +512,7 @@ export function PersonList({
               <h2>{section.title}</h2>
               <PersonTable
                 ariaLabel={section.title}
+                showChildren
                 showPhone
                 indentPartners={section.rows.length > 2}
                 people={section.rows}
@@ -493,6 +529,7 @@ export function PersonList({
           <section className="generation root-generation">
             <PersonTable
               ariaLabel="Selected Cherry Kin and Spouses"
+              showChildren
               showPhone
               indentPartners={parentSection.rows.length > 2}
               people={parentSection.rows}
@@ -507,7 +544,7 @@ export function PersonList({
 
           <section className="generation">
             <DescendantHeading
-              count={generations.children.length}
+              counts={generations.counts.children}
               title="Children"
             />
             {generations.children.length === 0 ? (
@@ -515,6 +552,7 @@ export function PersonList({
             ) : (
               <PersonTable
                 ariaLabel="Children"
+                showChildren
                 showPhone
                 people={generations.children}
                 peopleById={peopleById}
@@ -530,11 +568,12 @@ export function PersonList({
           {generations.grandchildren.length > 0 ? (
             <section className="generation">
               <DescendantHeading
-                count={generations.grandchildren.length}
+                counts={generations.counts.grandchildren}
                 title="Grandchildren"
               />
               <PersonTable
                 ariaLabel="Grandchildren"
+                showChildren
                 showPhone
                 people={generations.grandchildren}
                 peopleById={peopleById}
@@ -551,11 +590,12 @@ export function PersonList({
           {generations.greatGrandchildren.length > 0 ? (
             <section className="generation">
               <DescendantHeading
-                count={generations.greatGrandchildren.length}
+                counts={generations.counts.greatGrandchildren}
                 title="Great Grandchildren"
               />
               <PersonTable
                 ariaLabel="Great Grandchildren"
+                showChildren
                 showPhone
                 people={generations.greatGrandchildren}
                 peopleById={peopleById}
@@ -572,11 +612,12 @@ export function PersonList({
           {generations.greatGreatGrandchildren.length > 0 ? (
             <section className="generation">
               <DescendantHeading
-                count={generations.greatGreatGrandchildren.length}
+                counts={generations.counts.greatGreatGrandchildren}
                 title="Great Great Grandchildren"
               />
               <PersonTable
                 ariaLabel="Great Great Grandchildren"
+                showChildren
                 showPhone
                 people={generations.greatGreatGrandchildren}
                 peopleById={peopleById}

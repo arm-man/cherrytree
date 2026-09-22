@@ -334,6 +334,7 @@ a {
   background: var(--highlight);
   font-size: 0.75rem;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .descendant-divider {
@@ -497,6 +498,7 @@ td.highlighted-birthday {
 }
 
 .deceased-age,
+.children-count,
 .person-phone {
   min-width: 1.5rem;
   min-height: 1.5rem;
@@ -512,6 +514,7 @@ td.highlighted-birthday {
 }
 
 .deceased-age:focus-visible,
+.children-count:focus-visible,
 .person-phone:focus-visible,
 .phone-action:focus-visible {
   outline: 0.2rem solid var(--foreground);
@@ -520,6 +523,8 @@ td.highlighted-birthday {
 
 .deceased-age:hover,
 .deceased-age[aria-expanded="true"],
+.children-count:hover,
+.children-count[aria-expanded="true"],
 .person-phone:hover,
 .person-phone[aria-expanded="true"] {
   background: rgba(243, 151, 157, 0.25);

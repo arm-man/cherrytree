@@ -42,6 +42,7 @@ Stores one row for each Cherry Kin.
 | `birthday`        | `date`             | No   | The birth date of the Cherry Kin.                                                                                      |
 | `deathday`        | `date`             | Yes  | The date of death of the Cherry Kin.                                                                                   |
 | `phone_number`    | `text`             | Yes  | Optional U.S. phone number, stored as 10 digits.                                                                   |
+| `is_step_or_adopted` | `boolean`       | No   | Whether this Cherry Kin's relationship to their Parent is Step / Adopted. Defaults to false.                       |
 | `created_at`      | `timestamptz`      | No   | Cherry Kin creation time. Use DEFAULT NOW().                                                                           |
 
 Constraints:
@@ -107,7 +108,7 @@ Age is derived, not stored. It uses birthday and deathday for deceased Cherry Ki
 
 ### Children, Grandchildren, Great Grandchildren, and Great Great Grandchildren
 
-A Cherry Kin's progeny can be derived from parent_id.
+A Cherry Kin's progeny can be derived from parent_id. Direct child counts separate rows by `is_step_or_adopted`. For descendant generation counts relative to a Root, crossing a row where `is_step_or_adopted` is true classifies that row and the rest of its branch as Step / Adopted descendants.
 
 ## Transactions
 

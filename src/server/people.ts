@@ -49,6 +49,7 @@ export async function getPeople(client?: PoolClient): Promise<Person[]> {
     `SELECT
        id,
        parent_id AS "parentId",
+       is_step_or_adopted AS "isStepOrAdopted",
        first_name AS "firstName",
        last_name AS "lastName",
        TO_CHAR(birthday, 'YYYY-MM-DD') AS birthday,

@@ -8,7 +8,7 @@ Run against the development database with the externally managed partners and an
 - Search every displayed field. Check case-insensitive partial matching and trimming. Combine Search with each Type, change both in either order, and verify empty results. Legacy spouse fields must not match.
 - Click both row types and their name links, including with keyboard navigation. Cherry Kin opens its existing edit route; Spouse opens its own partners id edit route, even when ids overlap.
 - Verify Search and Type survive Cancel/Return, successful edit, and refresh.
-- Add/Edit Cherry Kin has only First Name, Last Name, Birthday, Death Day, Parent and Phone Number. Preserve parent eligibility, root protection, descendant exclusion, and date rules.
+- Add/Edit Cherry Kin has First Name, Last Name, Birthday, Death Day, Parent, Step / Adopted child and Phone Number in that order. Verify the checkbox defaults false, saves both values and reloads the stored value on Edit. Preserve parent eligibility, root protection, descendant exclusion, and date rules.
 - Verify phones accept supported ten-digit formats, store digits only, display (703) 555-1234, reject invalid inputs, and can be cleared.
 - Add/Edit Spouse has First Name, Last Name, optional Birthday/Death Day and required Spouse dropdown. Options contain only Cherry Kin aged 16 or older, alphabetized by Full Name, and display Full Name followed by Birthday in the same format as Parent options (e.g. Candee Arant — Dec 14, 1975). Include someone turning 16 today; exclude someone turning 16 tomorrow. For deceased Cherry Kin, use age at death. Edit selects the current eligible association and can change it; an ineligible existing association requires a new selection before saving.
 - Verify blank optional dates save as SQL NULL. Reject Death Day without Birthday with a clear form error and direct API 400 response. Reject future/malformed dates or death before birth; accept equal dates.
@@ -16,7 +16,7 @@ Run against the development database with the externally managed partners and an
 - Verify one Save button, pending protection, retained input on failure, unchanged-edit message, and matching form styles. Successful Cherry Kin/Spouse Add stays, clears the form, identifies the added record and permits another entry. Successful Edit returns to the fresh filtered list.
 - After the externally managed column removal, verify Cherry Kin and Spouse POST/PUT requests still succeed with their current form fields. Spouse writes must not update people.
 - Verify no delete controls or mutation operations were added (unsupported DELETE returns 405).
-- Confirm existing Cherry Kin/Spouse and Genealogy behavior is unchanged and database/ files match their pre-task state.
+- Confirm Step / Adopted Cherry Kin remain visible, searchable and clickable without different row styling. Verify inherited Step / Adopted generation-heading counts, compact CHILDREN values and popups in both views, and normal-only # of Children sorting. Confirm no unrelated Cherry Kin/Spouse or Genealogy behavior changed.
 
 ## Ancestor checks
 

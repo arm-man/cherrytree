@@ -25,6 +25,7 @@ const people: PublicPerson[] = [
   {
     id: 1,
     parentId: null,
+    isStepOrAdopted: false,
     firstName: "Zelda",
     lastName: "Cherry",
     birthday: "1940-12-31",
@@ -34,6 +35,7 @@ const people: PublicPerson[] = [
   {
     id: 2,
     parentId: 1,
+    isStepOrAdopted: false,
     firstName: "Amy",
     lastName: "Young",
     birthday: "1970-01-02",
@@ -43,6 +45,7 @@ const people: PublicPerson[] = [
   {
     id: 3,
     parentId: 2,
+    isStepOrAdopted: false,
     firstName: "Ben",
     lastName: "Young",
     birthday: "1995-06-15",
@@ -52,6 +55,7 @@ const people: PublicPerson[] = [
   {
     id: 4,
     parentId: 3,
+    isStepOrAdopted: false,
     firstName: "Cora",
     lastName: "Young",
     birthday: "2015-06-15",
@@ -61,6 +65,7 @@ const people: PublicPerson[] = [
   {
     id: 5,
     parentId: 4,
+    isStepOrAdopted: false,
     firstName: "Dora",
     lastName: "Young",
     birthday: "2035-06-15",
@@ -116,6 +121,10 @@ test("builds separate rows with ID associations, comma-separated spouses and no 
     rows.people.map((person) => person.childCount),
     [1, 1, 1, 1, 0],
   );
+  assert.deepEqual(
+    rows.people.map((person) => person.stepOrAdoptedChildCount),
+    [0, 0, 0, 0, 0],
+  );
   assert.equal(
     new Set([...rows.people, ...rows.partners].map((row) => row.rowKey)).size,
     9,
@@ -131,6 +140,10 @@ test("builds separate rows with ID associations, comma-separated spouses and no 
   assert.deepEqual(
     rows.partners.map((partner) => partner.childCount),
     [null, null, 1, 1],
+  );
+  assert.deepEqual(
+    rows.partners.map((partner) => partner.stepOrAdoptedChildCount),
+    [null, null, 0, 0],
   );
   for (const partner of rows.partners) {
     assert.equal("phoneNumber" in partner, false);
@@ -208,10 +221,14 @@ test("Cherry Kin and only partner id 1 navigate to people records", () => {
       getParentSection(root, rows.partners),
       ...getAncestorSections(root, peopleById, rows.partners),
     ];
+    const generations = getGenealogyGenerations(rows.people, root.id);
     const displayedRows = [
       ...getListRows(rows.people, rows.partners),
       ...sections.flatMap((section) => section.rows),
-      ...Object.values(getGenealogyGenerations(rows.people, root.id)).flat(),
+      ...generations.children,
+      ...generations.grandchildren,
+      ...generations.greatGrandchildren,
+      ...generations.greatGreatGrandchildren,
     ];
     for (const row of displayedRows) {
       assert.equal(
@@ -224,6 +241,37 @@ test("Cherry Kin and only partner id 1 navigate to people records", () => {
       );
     }
   }
+});
+
+test("Cherry Kin and sole partners separate normal and step/adopted child counts", () => {
+  const sourcePeople = people.map((person) =>
+    person.id === 2 ? { ...person, isStepOrAdopted: true } : person,
+  );
+  const rows = getPublicRows(sourcePeople, [partners[0], partners[2]]);
+
+  assert.deepEqual(
+    rows.people.map((person) => [
+      person.childCount,
+      person.stepOrAdoptedChildCount,
+    ]),
+    [
+      [0, 1],
+      [1, 0],
+      [1, 0],
+      [1, 0],
+      [0, 0],
+    ],
+  );
+  assert.deepEqual(
+    rows.partners.map((partner) => [
+      partner.childCount,
+      partner.stepOrAdoptedChildCount,
+    ]),
+    [
+      [0, 1],
+      [1, 0],
+    ],
+  );
 });
 
 test("partner id 1 targets people id 1 regardless of spouse association", () => {
@@ -509,6 +557,7 @@ test("Ancestors share every List sort and search without becoming genealogy reco
     {
       id: 10,
       parentId: null,
+      isStepOrAdopted: false,
       firstName: "Cara",
       lastName: "Kin",
       birthday: "1950-01-01",

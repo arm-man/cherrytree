@@ -21,11 +21,11 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 
 ## Data
 
-- Every Cherry Kin has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Cherry Kin and has no parent. Death Day and Phone Number are optional and may be null/blank. Spouse information is stored separately and associated with Cherry Kin.
+- Every Cherry Kin has a First Name, Last Name, Birthday, and one parent relationship, except id=1, who is the single top-level Cherry Kin and has no parent. A Cherry Kin may be marked as a Step / Adopted child; this classifies their relationship to their Parent without changing their status as Cherry Kin. Death Day and Phone Number are optional and may be null/blank. Spouse information is stored separately and associated with Cherry Kin.
 - The parent relationships are sufficient to derive the complete genealogy of descendants.
 - Today's date means the current calendar date in the user's local time zone for all product rules that depend on today, including Age and Upcoming Birthday.
 - Age is derived from Birthday and Death Day (if deceased) or today's date (if living) and is not independently maintained.
-- Children is derived as the number of Cherry Kin whose parent is that Cherry Kin and is not independently maintained.
+- Children is derived from the Cherry Kin whose parent is that Cherry Kin and is not independently maintained. Normal and Step / Adopted children are counted separately.
 
 ## Page Header
 
@@ -60,6 +60,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Cherry Kin, Spouses, and Ancestors are shown in a single table with columns: Name, Age, Birthed, Children, Spouse. When sorted by Date of Passing, insert Passed Away immediately after Birthed.
   - Name is the Full Name.
   - Birthed displays the Cherry Kin's Birthday. The term "Birthed" is used since it preserves the naming as used on the original site: http://roncherry.net/cherrytree/birthed.htm
+  - Children displays the normal child count alone when there are no Step / Adopted children, or `<normal> + <step/adopted>` when both counts are needed. A value containing a Step / Adopted count reveals a hover/focus/tap popup that explains both numbers with correct singular/plural wording.
 - Only in List View, the NAME, AGE, BIRTHED, CHILDREN and SPOUSE column headings are buttons that select the existing Sort dropdown option using these exact mappings: NAME → First Name, AGE → Age, BIRTHED → Birthday, CHILDREN → # of Children, SPOUSE → Spouse.
   - Reuse the dropdown's existing Sort state, event handler and sorting logic. The dropdown immediately displays the selected option, with exactly the same ordering, filtering and remembered List Sort behavior as selecting it manually. Repeated header activation keeps that same sort; it never toggles direction or introduces separate sorting behavior.
   - Make these headings visibly interactive with an underline and pointer cursor. Support keyboard activation with Enter and Space and retain a visible focus indicator.
@@ -75,6 +76,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - Use compact cell spacing while keeping names, dates, ages, and column headings on one line. Allow horizontal scrolling within the table when needed to reach the Spouse column; do not split words or force the six columns to fit the viewport.
 - When the Sort option is Spouse, sort alphabetically. Ignore the fact that the name may contain a first or last name, simply order the text data alphabetically.
 - When the Sort option is # of Children, sort descending.
+  - Sort only by the normal child count; ignore the Step / Adopted child count.
   - A sole Spouse uses the associated Cherry Kin's Children count, including 0, and sorts normally. Spouses in multiple-spouse relationships have blank Children, sorted after all numeric counts.
 - Except for Date of Passing, sorting never omits rows. Blank values in the selected sort field always appear after populated values, for both ascending sorts and the descending Age and # of Children sorts. Missing Birthdays are not highlighted by Upcoming Birthday.
 - Except for Age and the name sorts below, when a sort has the same value, e.g. the same Children, the secondary sort is by Full Name. Any additional conflicts are not necessary to resolve and defaulting to the database order is ok.
@@ -88,7 +90,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
 - Public Spouse information comes exclusively from `partners`, associated through `partners.partner_id = people.id`. Each record is independent; duplicate names are allowed and are never matched or deduplicated by name.
 - Every Cherry Kin, Spouse, and Ancestor produces exactly one List row, including Spouses without Birthdays. With Search empty, the List row count equals the number of people rows plus partners rows plus ancestors rows, except when sorted by Date of Passing, which includes only entries with a non-NULL Death Day.
 - Spouse rows use their own First Name, Last Name, Birthday and Death Day. Age, deceased indicators and death-detail popups use the same calculations and presentation as Cherry Kin. Missing Birthday leaves Age and Birthed blank.
-- A Spouse row's Spouse column shows the associated Cherry Kin Full Name. If its partner_id occurs exactly once in partners, its Children equals the associated Cherry Kin's child count, including 0. Otherwise Children is blank. Count all partner records regardless of Birthday or Search; this display rule does not add partners to genealogy or child-count calculations. Spouse rows never have telephone icons or inherit Cherry Kin phone numbers.
+- A Spouse row's Spouse column shows the associated Cherry Kin Full Name. If its partner_id occurs exactly once in partners, its Children uses the associated Cherry Kin's separate normal and Step / Adopted child counts, including 0. Otherwise Children is blank. Count all partner records regardless of Birthday or Search; this display rule does not add partners to genealogy or child-count calculations. Spouse rows never have telephone icons or inherit Cherry Kin phone numbers.
 - Spouse names and rows are non-clickable throughout public Genealogy and List Views, including the Root group and all ancestry sections. Render names as plain text with no click handler, pointer cursor, link styling, or selection hover effect. Spouses never select a Root Cherry Kin. Their existing Age detail controls remain available.
 - A Cherry Kin's Spouse column shows all associated Spouse Full Names, separated by commas, including those without Birthdays.
 - All three row types use the List sorting rules above, including Age, and case-insensitive, trimmed partial search against Full Name OR Spouse only. Age and Birthed are not searched. There is no sort-direction control. Blank Birthdays sort after real dates.
@@ -121,9 +123,10 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - Display the number as (703) 555-1212. On hover-capable, fine-pointer devices, follow it with Copy only. Copy writes the displayed number (without a tel: prefix) to the clipboard, briefly shows Copied on success, and reports Could not copy if clipboard access fails.
   - On touch-oriented or coarse-pointer devices, follow the number with Call only. Call is a tel: link using +1 followed by the stored 10 U.S. digits.
   - Phone, Copy, and Call interactions do not activate Cherry Kin navigation; the Name remains independently clickable.
-- Each Genealogy table displays the same Cherry Kin data columns as List View except Children and the Date of Passing sort's Passed Away column, which are omitted.
-- The number of children, grandchildren, etc. is listed in the Generation title, e.g. "Children (5)" if the Root Cherry Kin has 5 children or "Grandchildren (18)" if the Root Cherry Kin has 18 grandchildren.
-  - The numbers in parenthesis do not change based on the entries highlighted by the Search text box.
+- Each Genealogy table displays the same Cherry Kin data columns as List View except the Date of Passing sort's Passed Away column, which is omitted. Genealogy column headings remain noninteractive.
+- The number of children, grandchildren, etc. is displayed without parentheses in the Generation divider. Count normal and Step / Adopted descendants separately, such as "Children 4 + 2 step/adopted". Omit the Step / Adopted portion when its count is zero, such as "Grandchildren 42".
+  - For each Root, a descendant is normal only when their entire path from that Root contains no Cherry Kin marked Step / Adopted. Once a path crosses a Step / Adopted Cherry Kin, that person and every later descendant on the branch remain Step / Adopted descendants relative to that Root.
+  - The displayed counts do not change based on the entries highlighted by the Search text box.
 - When Search is empty, no rows are highlighted based on Search.
 - If the Root Cherry Kin has zero of a certain descendant Generation, that Generation is omitted, with the exception of the Children Generation, in which case that section is shown but with the message "No Children".
 - Each Cherry Kin's Name is clickable. In every section, clicking a Cherry Kin selects that exact Cherry Kin as the Root and recalculates the boxed group, Spouses, ancestry, and descendants using the existing Root selection state. Clicking the current Root keeps that Cherry Kin selected. Clicking from List still switches to Genealogy and preserves the remembered List Sort and Search.
@@ -142,7 +145,7 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - Retain visible keyboard focus. Keep the popup within the viewport and outside table clipping, without adding horizontal scrolling; dismiss it when the viewport is resized or scrolled.
 - Death Day appears as Passed Away only in List View when sorted by Date of Passing. Genealogy View and all other List sorts omit this column. Keep Death Day in stored and internal Cherry Kin data for age calculations, death details, and the Date of Passing sort.
 - Public dates use full English month names, e.g. March 14, 2008 or May 17, 1947, matching the existing Birthed display. Birthday and Death Day remain calendar dates without time-zone conversion.
-- Children to be shown as a number.
+- Children is shown as the compact normal count or normal plus Step / Adopted count described above. Do not otherwise style Step / Adopted Cherry Kin differently.
 - If there is no Spouse, that field remains blank.
 - Public Spouse information is read from the partners table and associated with Cherry Kin. Spouse names are informational and are not clickable.
 - Descendant generations contain only descendants of the Root Cherry Kin; ancestor generations follow only Cherry Kin parent relationships. Spouses have no effect on genealogy relationships or descendant counts.
@@ -167,8 +170,9 @@ Primary user goal: view birthdays, see how people are related, and conveniently 
   - Preserve Search and Type when returning from any Add or Edit form.
   - An Add Cherry Kin button navigates to `/admin/people/new`.
   - Clicking a Cherry Kin navigates to `/admin/people/[id]/edit` for that Cherry Kin.
-- The Add Cherry Kin and Edit Cherry Kin forms contain fields in exactly this order: First Name, Last Name, Birthday, Death Day, Parent, Phone Number.
+- The Add Cherry Kin and Edit Cherry Kin forms contain fields in exactly this order: First Name, Last Name, Birthday, Death Day, Parent, Step / Adopted child, Phone Number.
   - First Name, Last Name, Birthday, and Parent are required, except that id=1 is the single top-level Cherry Kin and has no Parent.
+  - Step / Adopted child is a checkbox that defaults to unchecked and reads/writes `people.is_step_or_adopted`.
   - Death Day and Phone Number are optional. Blank optional values are stored as null and existing values can be cleared.
   - Birthday must not be in the future. Death Day, when provided, must not be before Birthday or in the future.
   - Phone Number accepts exactly 10 U.S. digits after removing spaces, parentheses, hyphens, and periods. Reject other characters, country codes, and extensions; do not validate area codes or exchanges. Store digits only; display as (703) 555-1234 in the list and edit form. Validate on both client and server.

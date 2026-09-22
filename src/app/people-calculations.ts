@@ -3,6 +3,7 @@ import { calculateAge, getDaysUntilNextBirthday } from "./date-calculations.ts";
 interface PersonRelationship {
   id: number;
   parentId: number | null;
+  isStepOrAdopted: boolean;
 }
 
 interface GenealogyPerson extends PersonRelationship {
@@ -42,23 +43,39 @@ export interface GenealogyGenerations<T extends GenealogyPerson> {
   grandchildren: T[];
   greatGrandchildren: T[];
   greatGreatGrandchildren: T[];
+  counts: {
+    children: DescendantCounts;
+    grandchildren: DescendantCounts;
+    greatGrandchildren: DescendantCounts;
+    greatGreatGrandchildren: DescendantCounts;
+  };
+}
+
+export interface DescendantCounts {
+  normal: number;
+  stepOrAdopted: number;
 }
 
 export function getChildCounts(
   people: readonly PersonRelationship[],
-): Map<number, number> {
-  const childCounts = new Map<number, number>();
+): Map<number, DescendantCounts> {
+  const childCounts = new Map<number, DescendantCounts>();
 
   for (const person of people) {
-    childCounts.set(person.id, 0);
+    childCounts.set(person.id, { normal: 0, stepOrAdopted: 0 });
   }
 
   for (const person of people) {
     if (person.parentId !== null) {
-      childCounts.set(
-        person.parentId,
-        (childCounts.get(person.parentId) ?? 0) + 1,
-      );
+      const counts = childCounts.get(person.parentId) ?? {
+        normal: 0,
+        stepOrAdopted: 0,
+      };
+      childCounts.set(person.parentId, {
+        normal: counts.normal + Number(!person.isStepOrAdopted),
+        stepOrAdopted:
+          counts.stepOrAdopted + Number(person.isStepOrAdopted),
+      });
     }
   }
 
@@ -71,10 +88,13 @@ export function getGenealogyGenerations<T extends GenealogyPerson>(
 ): GenealogyGenerations<T> {
   const peopleById = new Map(people.map((person) => [person.id, person]));
 
-  function getChildren(parentIds: ReadonlySet<number>): T[] {
-    return people
+  function getChildren(
+    parentBranches: ReadonlyMap<number, boolean>,
+  ): { people: T[]; branches: Map<number, boolean>; counts: DescendantCounts } {
+    const descendants = people
       .filter(
-        (person) => person.parentId !== null && parentIds.has(person.parentId),
+        (person) =>
+          person.parentId !== null && parentBranches.has(person.parentId),
       )
       .sort((firstPerson, secondPerson) => {
         if (firstPerson.parentId !== secondPerson.parentId) {
@@ -92,25 +112,57 @@ export function getGenealogyGenerations<T extends GenealogyPerson>(
 
         return firstPerson.birthday.localeCompare(secondPerson.birthday);
       });
+
+    const branches = new Map<number, boolean>();
+    let stepOrAdopted = 0;
+    for (const person of descendants) {
+      // Once a path crosses a step/adopted child, every later descendant on
+      // that path remains in the step/adopted branch relative to this Root.
+      const isStepOrAdoptedBranch =
+        person.isStepOrAdopted ||
+        (person.parentId !== null &&
+          (parentBranches.get(person.parentId) ?? false));
+      branches.set(person.id, isStepOrAdoptedBranch);
+      stepOrAdopted += Number(isStepOrAdoptedBranch);
+    }
+
+    return {
+      people: descendants,
+      branches,
+      counts: {
+        normal: descendants.length - stepOrAdopted,
+        stepOrAdopted,
+      },
+    };
   }
 
-  const children = getChildren(new Set([rootPersonId]));
-  const grandchildren = getChildren(
-    new Set(children.map((person) => person.id)),
-  );
-  const greatGrandchildren = getChildren(
-    new Set(grandchildren.map((person) => person.id)),
-  );
-  const greatGreatGrandchildren = getChildren(
-    new Set(greatGrandchildren.map((person) => person.id)),
-  );
+  const children = getChildren(new Map([[rootPersonId, false]]));
+  const grandchildren = getChildren(children.branches);
+  const greatGrandchildren = getChildren(grandchildren.branches);
+  const greatGreatGrandchildren = getChildren(greatGrandchildren.branches);
 
   return {
-    children,
-    grandchildren,
-    greatGrandchildren,
-    greatGreatGrandchildren,
+    children: children.people,
+    grandchildren: grandchildren.people,
+    greatGrandchildren: greatGrandchildren.people,
+    greatGreatGrandchildren: greatGreatGrandchildren.people,
+    counts: {
+      children: children.counts,
+      grandchildren: grandchildren.counts,
+      greatGrandchildren: greatGrandchildren.counts,
+      greatGreatGrandchildren: greatGreatGrandchildren.counts,
+    },
   };
+}
+
+export function formatChildCountDescription(
+  normalCount: number,
+  stepOrAdoptedCount: number,
+): string {
+  const normalLabel = normalCount === 1 ? "child" : "children";
+  const stepOrAdoptedLabel =
+    stepOrAdoptedCount === 1 ? "child" : "children";
+  return `${normalCount} ${normalLabel} + ${stepOrAdoptedCount} step/adopted ${stepOrAdoptedLabel}`;
 }
 
 function compareText(

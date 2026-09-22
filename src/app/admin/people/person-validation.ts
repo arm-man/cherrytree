@@ -9,6 +9,7 @@ export interface PersonValues {
   deathday: string | null;
   phoneNumber: string | null;
   parentId: number | null;
+  isStepOrAdopted: boolean;
 }
 
 export type PersonErrorCode =
@@ -208,6 +209,18 @@ export function validatePerson(
   const phoneNumber = validatePhoneNumber(
     "phoneNumber" in input ? input.phoneNumber : null,
   );
+  const isStepOrAdopted =
+    "isStepOrAdopted" in input
+      ? input.isStepOrAdopted
+      : (people.find((person) => person.id === personId)?.isStepOrAdopted ??
+        false);
+  if (typeof isStepOrAdopted !== "boolean") {
+    throw new PersonValidationError(
+      "REQUIRED_FIELD_MISSING",
+      "Choose whether this is a Step / Adopted child.",
+      "isStepOrAdopted",
+    );
+  }
   const parentId = "parentId" in input ? input.parentId : undefined;
   if (personId === 1) {
     if (parentId !== null) {
@@ -271,6 +284,7 @@ export function validatePerson(
     deathday: typeof deathday === "string" ? deathday.trim() || null : null,
     phoneNumber,
     parentId: typeof parentId === "number" ? parentId : null,
+    isStepOrAdopted,
   };
 }
 
@@ -284,6 +298,7 @@ export function hasPersonChanges(
     values.birthday !== stored.birthday ||
     values.deathday !== (stored.deathday?.trim() || null) ||
     values.phoneNumber !== stored.phoneNumber ||
-    values.parentId !== stored.parentId
+    values.parentId !== stored.parentId ||
+    values.isStepOrAdopted !== stored.isStepOrAdopted
   );
 }

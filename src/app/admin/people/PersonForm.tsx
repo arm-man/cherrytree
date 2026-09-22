@@ -27,6 +27,7 @@ const emptyValues: PersonValues = {
   deathday: "",
   phoneNumber: "",
   parentId: null,
+  isStepOrAdopted: false,
 };
 const fields = [
   { name: "firstName", label: "First Name", type: "text", required: true },
@@ -34,6 +35,12 @@ const fields = [
   { name: "birthday", label: "Birthday", type: "date", required: true },
   { name: "deathday", label: "Death Day", type: "date", required: false },
   { name: "parentId", label: "Parent", type: "parent", required: true },
+  {
+    name: "isStepOrAdopted",
+    label: "Step / Adopted child",
+    type: "checkbox",
+    required: false,
+  },
   { name: "phoneNumber", label: "Phone Number", type: "tel", required: false },
 ] as const;
 
@@ -73,6 +80,7 @@ export function PersonForm({
           deathday: person.deathday ?? "",
           phoneNumber: formatPhoneNumber(person.phoneNumber),
           parentId: person.parentId,
+          isStepOrAdopted: person.isStepOrAdopted,
         }
       : emptyValues,
   );
@@ -104,7 +112,7 @@ export function PersonForm({
 
   function change(
     field: keyof PersonValues,
-    value: string | number | null,
+    value: string | number | boolean | null,
   ): void {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
@@ -249,6 +257,24 @@ export function PersonForm({
                   {errors.parentId}
                 </p>
               )}
+            </div>
+          ) : field.name === "isStepOrAdopted" ? (
+            <div
+              key={field.name}
+              className={`${styles.field} ${styles.checkboxField}`}
+            >
+              <label htmlFor={field.name}>
+                <input
+                  id={field.name}
+                  name={field.name}
+                  type="checkbox"
+                  checked={values.isStepOrAdopted}
+                  onChange={(event) =>
+                    change(field.name, event.target.checked)
+                  }
+                />
+                <span>{field.label}</span>
+              </label>
             </div>
           ) : (
             <div key={field.name} className={styles.field}>

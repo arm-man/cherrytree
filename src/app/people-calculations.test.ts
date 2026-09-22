@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   filterPeopleBySearch,
+  formatChildCountDescription,
   getChildCounts,
   getGenealogyGenerations,
   personMatchesSearch,
@@ -44,29 +45,29 @@ const people = [
 
 test("counts children from parent relationships", () => {
   const childCounts = getChildCounts([
-    { id: 1, parentId: null },
-    { id: 2, parentId: 1 },
-    { id: 3, parentId: 1 },
-    { id: 4, parentId: 2 },
+    { id: 1, parentId: null, isStepOrAdopted: false },
+    { id: 2, parentId: 1, isStepOrAdopted: false },
+    { id: 3, parentId: 1, isStepOrAdopted: true },
+    { id: 4, parentId: 2, isStepOrAdopted: false },
   ]);
 
-  assert.equal(childCounts.get(1), 2);
-  assert.equal(childCounts.get(2), 1);
-  assert.equal(childCounts.get(3), 0);
-  assert.equal(childCounts.get(4), 0);
+  assert.deepEqual(childCounts.get(1), { normal: 1, stepOrAdopted: 1 });
+  assert.deepEqual(childCounts.get(2), { normal: 1, stepOrAdopted: 0 });
+  assert.deepEqual(childCounts.get(3), { normal: 0, stepOrAdopted: 0 });
+  assert.deepEqual(childCounts.get(4), { normal: 0, stepOrAdopted: 0 });
 });
 
 test("groups four generations and orders descendants by parent and birthday", () => {
   const genealogyPeople = [
-    { id: 1, parentId: null, birthday: "1917-11-30" },
-    { id: 2, parentId: 1, birthday: "1940-01-01" },
-    { id: 3, parentId: 1, birthday: "1938-01-01" },
-    { id: 4, parentId: 2, birthday: "1965-01-01" },
-    { id: 5, parentId: 3, birthday: "1970-01-01" },
-    { id: 6, parentId: 3, birthday: "1960-01-01" },
-    { id: 7, parentId: 6, birthday: "1985-01-01" },
-    { id: 8, parentId: 7, birthday: "2010-01-01" },
-    { id: 9, parentId: 8, birthday: "2030-01-01" },
+    { id: 1, parentId: null, birthday: "1917-11-30", isStepOrAdopted: false },
+    { id: 2, parentId: 1, birthday: "1940-01-01", isStepOrAdopted: false },
+    { id: 3, parentId: 1, birthday: "1938-01-01", isStepOrAdopted: false },
+    { id: 4, parentId: 2, birthday: "1965-01-01", isStepOrAdopted: false },
+    { id: 5, parentId: 3, birthday: "1970-01-01", isStepOrAdopted: false },
+    { id: 6, parentId: 3, birthday: "1960-01-01", isStepOrAdopted: false },
+    { id: 7, parentId: 6, birthday: "1985-01-01", isStepOrAdopted: false },
+    { id: 8, parentId: 7, birthday: "2010-01-01", isStepOrAdopted: false },
+    { id: 9, parentId: 8, birthday: "2030-01-01", isStepOrAdopted: false },
   ];
 
   const generations = getGenealogyGenerations(genealogyPeople, 1);
@@ -87,6 +88,53 @@ test("groups four generations and orders descendants by parent and birthday", ()
     generations.greatGreatGrandchildren.map((person) => person.id),
     [8],
   );
+  assert.deepEqual(generations.counts, {
+    children: { normal: 2, stepOrAdopted: 0 },
+    grandchildren: { normal: 3, stepOrAdopted: 0 },
+    greatGrandchildren: { normal: 1, stepOrAdopted: 0 },
+    greatGreatGrandchildren: { normal: 1, stepOrAdopted: 0 },
+  });
+});
+
+test("keeps every generation visible and inherits step/adopted branch classification", () => {
+  const genealogyPeople = [
+    { id: 1, parentId: null, birthday: "1940-01-01", isStepOrAdopted: false },
+    { id: 2, parentId: 1, birthday: "1960-01-01", isStepOrAdopted: false },
+    { id: 3, parentId: 1, birthday: "1962-01-01", isStepOrAdopted: true },
+    { id: 4, parentId: 2, birthday: "1980-01-01", isStepOrAdopted: false },
+    { id: 5, parentId: 3, birthday: "1982-01-01", isStepOrAdopted: false },
+    { id: 6, parentId: 2, birthday: "1984-01-01", isStepOrAdopted: true },
+    { id: 7, parentId: 4, birthday: "2000-01-01", isStepOrAdopted: false },
+    { id: 8, parentId: 5, birthday: "2002-01-01", isStepOrAdopted: false },
+    { id: 9, parentId: 6, birthday: "2004-01-01", isStepOrAdopted: false },
+  ];
+
+  const generations = getGenealogyGenerations(genealogyPeople, 1);
+
+  assert.deepEqual(
+    [
+      generations.children,
+      generations.grandchildren,
+      generations.greatGrandchildren,
+      generations.greatGreatGrandchildren,
+    ]
+      .flat()
+      .map((person) => person.id),
+    [2, 3, 4, 6, 5, 7, 8, 9],
+  );
+  assert.deepEqual(generations.counts, {
+    children: { normal: 1, stepOrAdopted: 1 },
+    grandchildren: { normal: 1, stepOrAdopted: 2 },
+    greatGrandchildren: { normal: 1, stepOrAdopted: 2 },
+    greatGreatGrandchildren: { normal: 0, stepOrAdopted: 0 },
+  });
+});
+
+test("formats child-count explanations with correct singular and plural labels", () => {
+  assert.equal(formatChildCountDescription(1, 1), "1 child + 1 step/adopted child");
+  assert.equal(formatChildCountDescription(4, 1), "4 children + 1 step/adopted child");
+  assert.equal(formatChildCountDescription(1, 2), "1 child + 2 step/adopted children");
+  assert.equal(formatChildCountDescription(0, 2), "0 children + 2 step/adopted children");
 });
 
 test("matches and filters partial names or spouses without regard to case or padding", () => {
@@ -115,6 +163,18 @@ test("sorts every List option, omits null death days and keeps missing spouses l
   assert.deepEqual(idsFor("Last Name"), [3, 1, 2]);
   assert.deepEqual(idsFor("Spouse"), [1, 3, 2]);
   assert.deepEqual(idsFor("Children"), [1, 3, 2]);
+});
+
+test("Children sorting uses only the normal child count", () => {
+  const rows = [
+    { ...people[0], id: 4, childCount: 4, stepOrAdoptedChildCount: 2 },
+    { ...people[1], id: 5, childCount: 5, stepOrAdoptedChildCount: 0 },
+  ];
+
+  assert.deepEqual(
+    sortPeople(rows, "Children", "2026-12-30").map((person) => person.id),
+    [5, 4],
+  );
 });
 
 test("Age sorts numerically with unknown ages below zero and Birthday ascending for ties", () => {

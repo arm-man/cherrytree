@@ -21,6 +21,7 @@ const root: AdminPerson = {
   deathday: "2020-01-01",
   phoneNumber: null,
   parentId: null,
+  isStepOrAdopted: false,
 };
 const child: AdminPerson = {
   ...root,
@@ -79,6 +80,7 @@ test("normalizes names and blank optional fields while retaining date-only strin
     deathday: null,
     phoneNumber: null,
     parentId: 1,
+    isStepOrAdopted: false,
   });
 });
 
@@ -93,6 +95,7 @@ test("rejects malformed bodies, missing fields and wrong field types", () => {
     { ...valid, lastName: 2 },
     { ...valid, birthday: null },
     { ...valid, parentId: null },
+    { ...valid, isStepOrAdopted: "yes" },
   ])
     rejects(input, "REQUIRED_FIELD_MISSING");
   rejects({ ...valid, birthday: 20000101 }, "INVALID_BIRTHDAY");
@@ -192,8 +195,19 @@ test("normalized unchanged values compare equal, while each editable field is de
     { deathday: today },
     { phoneNumber: "7035551234" },
     { parentId: 3 },
+    { isStepOrAdopted: true },
   ])
     assert.equal(hasPersonChanges({ ...values, ...change }, stored), true);
+});
+
+test("Step / Adopted child defaults false on create and is preserved when omitted on edit", () => {
+  assert.equal(validatePerson(valid, people, today).isStepOrAdopted, false);
+  const adoptedChild = { ...child, isStepOrAdopted: true };
+  assert.equal(
+    validatePerson(valid, [root, adoptedChild, grandchild], today, 2)
+      .isStepOrAdopted,
+    true,
+  );
 });
 
 test("phone numbers normalize supported formatting and reject invalid digits or characters", () => {
@@ -273,6 +287,7 @@ test("Cherry Kin validation returns only current editable people fields", () => 
     "birthday",
     "deathday",
     "firstName",
+    "isStepOrAdopted",
     "lastName",
     "parentId",
     "phoneNumber",
